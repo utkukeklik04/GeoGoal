@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoGoal — Champions League Penalty GeoGame</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Turf.js (Geodesic Distance) & Chart.js (End Summary) -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header id="top-hud" class="top-bar hidden">
+    <div id="home-brand-btn" class="brand home-trigger" title="Back to Home">
+      <span class="hud-earth">🌍</span>
+      <div>
+        <h1>GeoGoal</h1>
+        <small id="subtitle-text">GMT 458 Web GIS • UCL Night Edition</small>
+      </div>
+    </div>
+
+    <div class="hud-stats">
+      <div class="stat-box">
+        <span id="lbl-round">Round</span>
+        <strong id="round-display">1 / 6</strong>
+      </div>
+      <div class="stat-box timer-box">
+        <span id="lbl-time">Time</span>
+        <strong id="timer-display">15s</strong>
+      </div>
+      <div class="stat-box">
+        <span id="lbl-score">Score</span>
+        <strong id="score-display">0</strong>
+      </div>
+      <div class="stat-box">
+        <span id="lbl-best">Best</span>
+        <strong id="highscore-display">0</strong>
+      </div>
+      <div class="stat-box">
+        <span id="lbl-lang-hud">Language</span>
+        <button id="hud-lang-btn" class="btn-secondary" style="padding: 4px 10px; font-size: 12px; margin-top: 2px;">
+          EN / TR
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="game-container">
+    <!-- START SCREEN: GeoGoal with mini earth for 'o' in Goal, Duel Question, Play, Settings & EN/TR -->
+    <section id="start-screen" class="screen active">
+      <div class="start-card">
+        <div class="geogoal-logo" aria-label="GeoGoal">
+          <span>Geo</span>
+          <span class="goal-word">G<span class="mini-earth-o">🌍</span>al</span>
+        </div>
+        <p id="duel-question-message" class="duel-question-message">Can you win this duel?</p>
+
+        <div class="start-actions">
+          <button id="play-btn" class="btn-primary start-play-btn">Play</button>
+          <button id="settings-toggle-btn" class="btn-secondary">Settings</button>
+        </div>
+
+        <div id="settings-panel" class="settings-panel hidden">
+          <div class="setting-row">
+            <label id="lbl-rounds-setting" for="rounds-input">Rounds (6 - 9):</label>
+            <input id="rounds-input" type="number" min="6" max="9" value="6" />
+          </div>
+          <div class="setting-row">
+            <label id="lbl-duration-setting" for="duration-input">Round Time (10 - 30s):</label>
+            <input id="duration-input" type="number" min="10" max="30" value="15" />
+          </div>
+        </div>
+
+        <div class="lang-picker-row">
+          <span id="lbl-language-choice">Language:</span>
+          <div class="lang-buttons">
+            <button id="lang-en-btn" class="lang-choice-btn active" type="button">English</button>
+            <button id="lang-tr-btn" class="lang-choice-btn" type="button">Turkish</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 1: Location Guess & Classic OpenStreetMap -->
+    <section id="guess-screen" class="screen hidden">
+      <div class="guess-grid">
+        <div class="panel photo-panel">
+          <div class="panel-header">
+            <span id="question-title">Where is this place?</span>
+            <span id="location-hint" class="badge">Clue: Loading...</span>
+          </div>
+          <div class="photo-wrapper">
+            <img id="location-image" src="" alt="Target location" />
+            <div id="image-loader" class="image-loader hidden">Loading photo...</div>
+          </div>
+          <p id="status-message" class="status-text">
+            Click on the OpenStreetMap map to place your guess pin.
+          </p>
+        </div>
+
+        <div class="panel map-panel">
+          <div class="panel-header">
+            <span id="map-panel-title">OpenStreetMap Guess Area</span>
+            <span id="guess-coords-text" class="coords-badge">No pin placed</span>
+          </div>
+          <div id="map"></div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button id="shoot-btn" class="btn-primary" disabled>
+          Confirm Guess & Go to Penalty
+        </button>
+      </div>
+    </section>
+
+    <!-- SCREEN 2: Dedicated Champions League Penalty Shootout Arena -->
+    <section id="penalty-screen" class="screen hidden">
+      <div id="penalty-loading" class="penalty-loader">
+        <div class="spinner"></div>
+        <p>Loading Penalty Arena & Crowd...</p>
+      </div>
+
+      <div id="penalty-stage" class="panel arena-panel hidden">
+        <div class="panel-header">
+          <span id="penalty-location-title">Location Reveal</span>
+          <span id="crowd-mood-badge" class="badge">Crowd: Watching</span>
+        </div>
+
+        <div class="arena-info">
+          <div class="info-chip">
+            <span id="lbl-distance">Distance Error:</span>
+            <strong id="distance-display">-- km</strong>
+          </div>
+          <div class="info-chip">
+            <span id="lbl-chance">Goal Chance:</span>
+            <strong id="chance-display">--%</strong>
+          </div>
+          <div class="info-chip">
+            <span id="lbl-outcome">Outcome:</span>
+            <strong id="outcome-display">Shooting...</strong>
+          </div>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="penalty-canvas" width="960" height="390"></canvas>
+        </div>
+
+        <div class="post-shot-grid">
+          <div id="result-map" class="mini-map"></div>
+          <div class="result-summary-box">
+            <p id="result-detail-text">Calculating shot...</p>
+            <button id="next-btn" class="btn-secondary" disabled>
+              Next Round →
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>© Utku Keklik 2026</span>
+  </footer>
+
+  <!-- End-of-Game Summary Modal -->
+  <div id="summary-modal" class="modal hidden">
+    <div class="modal-card">
+      <div id="confetti-layer" class="confetti-layer hidden"></div>
+      <div id="trophy-banner" class="trophy-banner hidden">
+        <span class="trophy-icon">🏆</span>
+        <span id="trophy-caption">CHAMPIONS TROPHY • VICTORY</span>
+      </div>
+      <h2 id="summary-title">Full Time — Match Summary</h2>
+      <p id="match-verdict" class="match-verdict"></p>
+      <div class="summary-kpis">
+        <div><span id="lbl-final-goals">Goals</span><strong id="final-goals">0 / 6</strong></div>
+        <div><span id="lbl-final-score">Final Score</span><strong id="final-score">0</strong></div>
+        <div><span id="lbl-final-best">Best Score</span><strong id="final-best">0</strong></div>
+      </div>
+
+      <div class="chart-box">
+        <canvas id="results-chart"></canvas>
+      </div>
+
+      <button id="restart-btn" class="btn-primary">Play Again</button>
+    </div>
+  </div>
+
+  <!-- Leaflet JS & Main App -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
