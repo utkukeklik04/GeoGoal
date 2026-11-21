@@ -33,7 +33,7 @@ Then the penalty animation runs with a goalkeeper. If you score, you get base po
 ---
 
 ## Layout Sketch
-
+```text
 +-------------------------------------------------------------------+
 | GeoGoal               Round: 1/6 (Easy)    Time: 15s    Score: 0  |
 +---------------------------------+---------------------------------+
@@ -47,3 +47,4 @@ Then the penalty animation runs with a goalkeeper. If you score, you get base po
 | PENALTY SCENE                                                     |
 | Distance: -- km  |  Goal Chance: --%  |  Goalkeeper & Ball Anim.  |
 +-------------------------------------------------------------------+
+At the end of the game, a summary screen shows the distance errors and results with a
