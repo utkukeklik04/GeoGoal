@@ -1,6 +1,5 @@
 # GeoGoal — Champions League Penalty GeoGame
 
-**Live Demo:** [https://utkukeklik04.github.io/GeoGoal](https://utkukeklik04.github.io/GeoGoal)  
 **Course:** GMT 458 Web GIS  
 **Author:** Utku Keklik (2220674058)  
 
