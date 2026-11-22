@@ -1,171 +1,384 @@
-// 1. 150 Iconic Landmarks, Cityscapes & Structures Worldwide (EN & TR)
-// Format: [name, difficulty, clueEN, clueTR, coords, wikiTitle]
+// Curated iconic landmarks with verified real-world photography sources & multi-fallback resilience
+// Format: [name, difficulty, clueEN, clueTR, coords, wikiTitle, directPhotoUrl]
 const RAW_LOCATIONS = [
-  // ================= EASY (50) =================
-  ["Eiffel Tower, Paris", "Easy", "Europe • France • Paris • Iron tower by the Seine", "Avrupa • Fransa • Paris • Seine Nehri kenarında demir kule", [48.8584, 2.2945], "Eiffel_Tower"],
-  ["Colosseum, Rome", "Easy", "Europe • Italy • Rome • Ancient Roman arena", "Avrupa • İtalya • Roma • Antik Roma gladyatör arenası", [41.8902, 12.4922], "Colosseum"],
-  ["Statue of Liberty, New York", "Easy", "North America • USA • New York Harbor • Copper statue", "Kuzey Amerika • ABD • New York Limanı • Bakır heykel", [40.6892, -74.0445], "Statue_of_Liberty"],
-  ["Big Ben, London", "Easy", "Europe • UK • London • Clock tower by Thames", "Avrupa • İngiltere • Londra • Thames kıyısında saat kulesi", [51.5007, -0.1246], "Big_Ben"],
-  ["Pyramids of Giza, Egypt", "Easy", "North Africa • Egypt • Near Cairo • Desert pyramids", "Kuzey Afrika • Mısır • Kahire yakını • Çöl piramitleri", [29.9792, 31.1342], "Great_Pyramid_of_Giza"],
-  ["Taj Mahal, Agra", "Easy", "South Asia • India • Agra • White marble monument", "Güney Asya • Hindistan • Agra • Beyaz mermer yapı", [27.1751, 78.0421], "Taj_Mahal"],
-  ["Christ the Redeemer, Rio de Janeiro", "Easy", "South America • Brazil • Rio • Statue on Corcovado hill", "Güney Amerika • Brezilya • Rio • Tepe üstü dev heykel", [-22.9519, -43.2105], "Christ_the_Redeemer_(statue)"],
-  ["Sydney Opera House, Australia", "Easy", "Oceania • Australia • Sydney • Sail-shaped harbor roof", "Okyanusya • Avustralya • Sidney • Yelken çatılı liman yapısı", [-33.8568, 151.2153], "Sydney_Opera_House"],
-  ["Sagrada Familia, Barcelona", "Easy", "Europe • Spain • Barcelona • Gaudi church towers", "Avrupa • İspanya • Barselona • Gaudi'nin ünlü bazilikası", [41.4036, 2.1744], "Sagrada_Fam%C3%ADlia"],
-  ["Acropolis of Athens, Greece", "Easy", "Europe • Greece • Athens • Parthenon on rocky hill", "Avrupa • Yunanistan • Atina • Tepe üstü Parthenon", [37.9715, 23.7257], "Acropolis_of_Athens"],
-  ["Mount Fuji, Japan", "Easy", "East Asia • Japan • Honshu • Snow-capped volcano cone", "Doğu Asya • Japonya • Honşu • Karlı koni volkan", [35.3606, 138.7274], "Mount_Fuji"],
-  ["Golden Gate Bridge, San Francisco", "Easy", "North America • USA • California • Orange suspension bridge", "Kuzey Amerika • ABD • Kaliforniya • Turuncu asma köprü", [37.8199, -122.4783], "Golden_Gate_Bridge"],
-  ["Burj Khalifa, Dubai", "Easy", "Middle East • UAE • Dubai • World's tallest tower", "Orta Doğu • BAE • Dubai • Dünyanın en yüksek gökdeleni", [25.1972, 55.2744], "Burj_Khalifa"],
-  ["Hagia Sophia, Istanbul", "Easy", "Europe/Asia border • Türkiye • Istanbul • Historic dome", "Avrupa-Asya • Türkiye • İstanbul • Tarihi büyük kubbe", [41.0086, 28.9802], "Hagia_Sophia"],
-  ["Stonehenge, England", "Easy", "Europe • UK • Southern England • Prehistoric stone ring", "Avrupa • İngiltere • Güney İngiltere • Tarih öncesi taş çember", [51.1789, -1.8262], "Stonehenge"],
-  ["Leaning Tower of Pisa, Italy", "Easy", "Europe • Italy • Tuscany • Tilted white bell tower", "Avrupa • İtalya • Toskana • Eğik çan kulesi", [43.7230, 10.3966], "Leaning_Tower_of_Pisa"],
-  ["Louvre Museum, Paris", "Easy", "Europe • France • Paris • Glass pyramid courtyard", "Avrupa • Fransa • Paris • Cam piramitli müze avlusu", [48.8606, 2.3376], "Louvre"],
-  ["Moscow Kremlin, Russia", "Easy", "Eastern Europe • Russia • Moscow • Red Square walls/towers", "Doğu Avrupa • Rusya • Moskova • Kızıl Meydan ve kuleler", [55.7520, 37.6175], "Moscow_Kremlin"],
-  ["Brandenburg Gate, Berlin", "Easy", "Central Europe • Germany • Berlin • Classical city gate", "Orta Avrupa • Almanya • Berlin • Tarihi sütunlu kapı", [52.5163, 13.3777], "Brandenburg_Gate"],
-  ["CN Tower, Toronto", "Easy", "North America • Canada • Ontario • Tall Toronto needle tower", "Kuzey Amerika • Kanada • Ontario • Toronto'nun uzun kulesi", [43.6426, -79.3871], "CN_Tower"],
-  ["Empire State Building, New York", "Easy", "North America • USA • Manhattan • Classic NYC skyscraper", "Kuzey Amerika • ABD • Manhattan • Klasik New York gökdeleni", [40.7484, -73.9857], "Empire_State_Building"],
-  ["Grand Canyon, Arizona", "Easy", "North America • USA • Arizona • Red rock river gorge", "Kuzey Amerika • ABD • Arizona • Kızıl kayalı büyük kanyon", [36.1069, -112.1129], "Grand_Canyon"],
-  ["Niagara Falls, Canada/USA", "Easy", "North America • Border of NY & Ontario • Huge waterfalls", "Kuzey Amerika • ABD-Kanada sınırı • Dev şelaleler", [43.0962, -79.0377], "Niagara_Falls"],
-  ["Buckingham Palace, London", "Easy", "Europe • UK • London • British royal palace", "Avrupa • İngiltere • Londra • Kraliyet sarayı", [51.5014, -0.1419], "Buckingham_Palace"],
-  ["Tower of London, England", "Easy", "Europe • UK • London • Historic castle by Thames", "Avrupa • İngiltere • Londra • Thames kıyısında kale", [51.5081, -0.0759], "Tower_of_London"],
-  ["St. Peter's Basilica, Vatican City", "Easy", "Europe • Vatican inside Rome • Huge church dome", "Avrupa • Vatikan (Roma içi) • Büyük bazilika kubbesi", [41.9022, 12.4539], "St._Peter%27s_Basilica"],
-  ["Neuschwanstein Castle, Germany", "Easy", "Central Europe • Germany • Bavaria • Alpine hill castle", "Orta Avrupa • Almanya • Bavyera • Dağ tepesinde şato", [47.5576, 10.7498], "Neuschwanstein_Castle"],
-  ["Alhambra, Granada", "Easy", "Europe • Spain • Andalusia • Granada palace & hills", "Avrupa • İspanya • Endülüs • Granada sarayı ve Sierra Nevada", [37.1760, -3.5881], "Alhambra"],
-  ["Chichen Itza, Mexico", "Easy", "North America • Mexico • Yucatan Peninsula • Step pyramid", "Kuzey Amerika • Meksika • Yucatan Yarımadası • Basamaklı piramit", [20.6843, -88.5678], "Chichen_Itza"],
-  ["Machu Picchu, Peru", "Easy", "South America • Peru • Andes Mountains • Ancient Inca ruins", "Güney Amerika • Peru • And Dağları • Antik İnka kenti", [-13.1631, -72.5450], "Machu_Picchu"],
-  ["Table Mountain, Cape Town", "Easy", "Southern Africa • South Africa • Cape Town • Flat-top peak", "Güney Afrika • Güney Afrika Cumh. • Cape Town • Düz tepeli dağ", [-33.9628, 18.4098], "Table_Mountain"],
-  ["Great Wall of China, Badaling", "Easy", "East Asia • Northern China • Near Beijing • Mountain wall", "Doğu Asya • Kuzey Çin • Pekin yakını • Dağ surları", [40.3584, 116.0201], "Great_Wall_of_China"],
-  ["Forbidden City, Beijing", "Easy", "East Asia • China • Beijing • Imperial palace complex", "Doğu Asya • Çin • Pekin • İmparatorluk saray kompleksi", [39.9163, 116.3972], "Forbidden_City"],
-  ["Angkor Wat, Cambodia", "Easy", "Southeast Asia • Cambodia • Siem Reap • Lotus temple towers", "Güneydoğu Asya • Kamboçya • Siem Reap • Tapınak kuleleri", [13.4125, 103.8670], "Angkor_Wat"],
-  ["Petra Treasury, Jordan", "Easy", "Middle East • Jordan • Desert canyon • Rose rock facade", "Orta Doğu • Ürdün • Çöl vadisi • Kayaya oyulmuş cephe", [30.3285, 35.4444], "Petra"],
-  ["Santorini Caldera, Greece", "Easy", "Europe • Greece • Aegean Sea island • White cliff houses", "Avrupa • Yunanistan • Ege adası • Beyaz uçurum evleri", [36.4618, 25.3753], "Santorini"],
-  ["Grand Canal, Venice", "Easy", "Europe • Italy • Northern Adriatic • Canal city & boats", "Avrupa • İtalya • Kuzey Adriyatik • Kanal ve tekneler", [45.4371, 12.3326], "Grand_Canal_(Venice)"],
-  ["Mount Rushmore, South Dakota", "Easy", "North America • USA • South Dakota • 4 carved faces in rock", "Kuzey Amerika • ABD • Güney Dakota • Kayaya oyulmuş 4 yüz", [43.8791, -103.4591], "Mount_Rushmore"],
-  ["Hollywood Sign, Los Angeles", "Easy", "North America • USA • Southern California • White hill letters", "Kuzey Amerika • ABD • Güney Kaliforniya • Tepedeki beyaz harfler", [34.1341, -118.3215], "Hollywood_Sign"],
-  ["Space Needle, Seattle", "Easy", "North America • USA • Washington State • Flying-saucer tower", "Kuzey Amerika • ABD • Washington Eyaleti • Gözlem kulesi", [47.6205, -122.3493], "Space_Needle"],
-  ["Marina Bay Sands, Singapore", "Easy", "Southeast Asia • Singapore • Harbor skyline • Boat rooftop", "Güneydoğu Asya • Singapur • Liman • Üstü tekne şekilli kuleler", [1.2834, 103.8607], "Marina_Bay_Sands"],
-  ["Tokyo Skytree, Japan", "Easy", "East Asia • Japan • Tokyo • Very tall modern tower", "Doğu Asya • Japonya • Tokyo • Çok yüksek modern kule", [35.7101, 139.8107], "Tokyo_Skytree"],
-  ["N Seoul Tower, South Korea", "Easy", "East Asia • South Korea • Seoul • Namsan hill tower", "Doğu Asya • Güney Kore • Seul • Tepe üstü kule", [37.5512, 126.9882], "N_Seoul_Tower"],
-  ["Charles Bridge, Prague", "Easy", "Central Europe • Czechia • Prague • Statue-lined stone bridge", "Orta Avrupa • Çekya • Prag • Heykelli taş köprü", [50.0865, 14.4114], "Charles_Bridge"],
-  ["Schönbrunn Palace, Vienna", "Easy", "Central Europe • Austria • Vienna • Yellow imperial palace", "Orta Avrupa • Avusturya • Viyana • Sarı imparatorluk sarayı", [48.1845, 16.3122], "Sch%C3%B6nbrunn_Palace"],
-  ["Hungarian Parliament, Budapest", "Easy", "Central Europe • Hungary • Budapest • Gothic building by Danube", "Orta Avrupa • Macaristan • Budapeşte • Tuna kıyısında gotik yapı", [47.5076, 19.0457], "Hungarian_Parliament_Building"],
-  ["Blue Mosque, Istanbul", "Easy", "Türkiye • Istanbul • Sultanahmet • Blue tiles & minarets", "Türkiye • İstanbul • Sultanahmet • Mavi çinili cami", [41.0054, 28.9768], "Sultan_Ahmed_Mosque"],
-  ["Göreme Fairy Chimneys, Cappadocia", "Easy", "Türkiye • Central Anatolia • Nevşehir/Cappadocia • Rock cones", "Türkiye • İç Anadolu • Kapadokya • Peri bacaları", [38.6431, 34.8289], "G%C3%B6reme"],
-  ["Anıtkabir, Ankara", "Easy", "Türkiye • Central Anatolia • Ankara • Mausoleum complex", "Türkiye • İç Anadolu • Ankara • Anıt mezar kompleksi", [39.9255, 32.8369], "An%C4%B1tkabir"],
-  ["Sugarloaf Mountain, Rio de Janeiro", "Easy", "South America • Brazil • Rio • Bay & cable car rock peak", "Güney Amerika • Brezilya • Rio • Koy kıyısı granit tepe", [-22.9486, -43.1566], "Sugarloaf_Mountain"],
+  // ================= EASY =================
+  [
+    "Eiffel Tower, Paris",
+    "Easy",
+    "Europe • France • Paris • Iron tower by the Seine",
+    "Avrupa • Fransa • Paris • Seine Nehri kenarında demir kule",
+    [48.8584, 2.2945],
+    "Eiffel_Tower",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg/800px-Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg"
+  ],
+  [
+    "Colosseum, Rome",
+    "Easy",
+    "Europe • Italy • Rome • Ancient Roman arena",
+    "Avrupa • İtalya • Roma • Antik Roma gladyatör arenası",
+    [41.8902, 12.4922],
+    "Colosseum",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Colosseo_2020.jpg/800px-Colosseo_2020.jpg"
+  ],
+  [
+    "Statue of Liberty, New York",
+    "Easy",
+    "North America • USA • New York Harbor • Copper statue",
+    "Kuzey Amerika • ABD • New York Limanı • Bakır heykel",
+    [40.6892, -74.0445],
+    "Statue_of_Liberty",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Lady_Liberty_under_a_blue_sky_%28cropped%29.jpg/800px-Lady_Liberty_under_a_blue_sky_%28cropped%29.jpg"
+  ],
+  [
+    "Big Ben, London",
+    "Easy",
+    "Europe • UK • London • Clock tower by Thames",
+    "Avrupa • İngiltere • Londra • Thames kıyısında saat kulesi",
+    [51.5007, -0.1246],
+    "Big_Ben",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Elizabeth_Tower%2C_London%2C_UK_-_Apr_2023.jpg/800px-Elizabeth_Tower%2C_London%2C_UK_-_Apr_2023.jpg"
+  ],
+  [
+    "Pyramids of Giza, Egypt",
+    "Easy",
+    "North Africa • Egypt • Near Cairo • Desert pyramids",
+    "Kuzey Afrika • Mısır • Kahire yakını • Çöl piramitleri",
+    [29.9792, 31.1342],
+    "Great_Pyramid_of_Giza",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Kheops_Pyramid.jpg/800px-Kheops_Pyramid.jpg"
+  ],
+  [
+    "Taj Mahal, Agra",
+    "Easy",
+    "South Asia • India • Agra • White marble monument",
+    "Güney Asya • Hindistan • Agra • Beyaz mermer yapı",
+    [27.1751, 78.0421],
+    "Taj_Mahal",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Taj_Mahal%2C_Agra%2C_India_edit3.jpg/800px-Taj_Mahal%2C_Agra%2C_India_edit3.jpg"
+  ],
+  [
+    "Christ the Redeemer, Rio de Janeiro",
+    "Easy",
+    "South America • Brazil • Rio • Statue on Corcovado hill",
+    "Güney Amerika • Brezilya • Rio • Tepe üstü dev heykel",
+    [-22.9519, -43.2105],
+    "Christ_the_Redeemer_(statue)",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Christ_the_Redeemer_-_Rio_de_Janeiro%2C_Brazil.jpg/800px-Christ_the_Redeemer_-_Rio_de_Janeiro%2C_Brazil.jpg"
+  ],
+  [
+    "Sydney Opera House, Australia",
+    "Easy",
+    "Oceania • Australia • Sydney • Sail-shaped harbor roof",
+    "Okyanusya • Avustralya • Sidney • Yelken çatılı liman yapısı",
+    [-33.8568, 151.2153],
+    "Sydney_Opera_House",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Sydney_Opera_House_-_Dec_2008.jpg/800px-Sydney_Opera_House_-_Dec_2008.jpg"
+  ],
+  [
+    "Sagrada Familia, Barcelona",
+    "Easy",
+    "Europe • Spain • Barcelona • Gaudi church towers",
+    "Avrupa • İspanya • Barselona • Gaudi'nin ünlü bazilikası",
+    [41.4036, 2.1744],
+    "Sagrada_Fam%C3%ADlia",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Sagrada_Familia_01.jpg/800px-Sagrada_Familia_01.jpg"
+  ],
+  [
+    "Acropolis of Athens, Greece",
+    "Easy",
+    "Europe • Greece • Athens • Parthenon on rocky hill",
+    "Avrupa • Yunanistan • Atina • Tepe üstü Parthenon",
+    [37.9715, 23.7257],
+    "Acropolis_of_Athens",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/The_Parthenon_in_Athens.jpg/800px-The_Parthenon_in_Athens.jpg"
+  ],
+  [
+    "Mount Fuji, Japan",
+    "Easy",
+    "East Asia • Japan • Honshu • Snow-capped volcano cone",
+    "Doğu Asya • Japonya • Honşu • Karlı koni volkan",
+    [35.3606, 138.7274],
+    "Mount_Fuji",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/080103_hakkai_fuji.jpg/800px-080103_hakkai_fuji.jpg"
+  ],
+  [
+    "Golden Gate Bridge, San Francisco",
+    "Easy",
+    "North America • USA • California • Orange suspension bridge",
+    "Kuzey Amerika • ABD • Kaliforniya • Turuncu asma köprü",
+    [37.8199, -122.4783],
+    "Golden_Gate_Bridge",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/GoldenGateBridge-001.jpg/800px-GoldenGateBridge-001.jpg"
+  ],
+  [
+    "Burj Khalifa, Dubai",
+    "Easy",
+    "Middle East • UAE • Dubai • World's tallest tower",
+    "Orta Doğu • BAE • Dubai • Dünyanın en yüksek gökdeleni",
+    [25.1972, 55.2744],
+    "Burj_Khalifa",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Burj_Khalifa.jpg/800px-Burj_Khalifa.jpg"
+  ],
+  [
+    "Hagia Sophia, Istanbul",
+    "Easy",
+    "Europe/Asia border • Türkiye • Istanbul • Historic dome",
+    "Avrupa-Asya • Türkiye • İstanbul • Tarihi büyük kubbe",
+    [41.0086, 28.9802],
+    "Hagia_Sophia",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Hagia_Sophia_Mars_2013.jpg/800px-Hagia_Sophia_Mars_2013.jpg"
+  ],
+  [
+    "Stonehenge, England",
+    "Easy",
+    "Europe • UK • Southern England • Prehistoric stone ring",
+    "Avrupa • İngiltere • Güney İngiltere • Tarih öncesi taş çember",
+    [51.1789, -1.8262],
+    "Stonehenge",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Stonehenge2007_07_30.jpg/800px-Stonehenge2007_07_30.jpg"
+  ],
+  [
+    "Leaning Tower of Pisa, Italy",
+    "Easy",
+    "Europe • Italy • Tuscany • Tilted white bell tower",
+    "Avrupa • İtalya • Toskana • Eğik çan kulesi",
+    [43.7230, 10.3966],
+    "Leaning_Tower_of_Pisa",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/The_Leaning_Tower_of_Pisa_SB.jpeg/800px-The_Leaning_Tower_of_Pisa_SB.jpeg"
+  ],
+  [
+    "Louvre Museum, Paris",
+    "Easy",
+    "Europe • France • Paris • Glass pyramid courtyard",
+    "Avrupa • Fransa • Paris • Cam piramitli müze avlusu",
+    [48.8606, 2.3376],
+    "Louvre",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Louvre_Museum_Wikimedia_Commons.jpg/800px-Louvre_Museum_Wikimedia_Commons.jpg"
+  ],
+  [
+    "Neuschwanstein Castle, Germany",
+    "Easy",
+    "Central Europe • Germany • Bavaria • Alpine hill castle",
+    "Orta Avrupa • Almanya • Bavyera • Dağ tepesinde şato",
+    [47.5576, 10.7498],
+    "Neuschwanstein_Castle",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Schloss_Neuschwanstein_2013.jpg/800px-Schloss_Neuschwanstein_2013.jpg"
+  ],
+  [
+    "Machu Picchu, Peru",
+    "Easy",
+    "South America • Peru • Andes Mountains • Ancient Inca ruins",
+    "Güney Amerika • Peru • And Dağları • Antik İnka kenti",
+    [-13.1631, -72.5450],
+    "Machu_Picchu",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Machu_Picchu%2C_Peru.jpg/800px-Machu_Picchu%2C_Peru.jpg"
+  ],
+  [
+    "Santorini Caldera, Greece",
+    "Easy",
+    "Europe • Greece • Aegean Sea island • White cliff houses",
+    "Avrupa • Yunanistan • Ege adası • Beyaz uçurum evleri",
+    [36.4618, 25.3753],
+    "Santorini",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Santorini_-_Oia_%28254026872%29.jpeg/800px-Santorini_-_Oia_%28254026872%29.jpeg"
+  ],
+  [
+    "Anıtkabir, Ankara",
+    "Easy",
+    "Türkiye • Central Anatolia • Ankara • Mausoleum complex",
+    "Türkiye • İç Anadolu • Ankara • Anıt mezar kompleksi",
+    [39.9255, 32.8369],
+    "An%C4%B1tkabir",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/An%C4%B1tkabir_main_view.jpg/800px-An%C4%B1tkabir_main_view.jpg"
+  ],
+  [
+    "Göreme Fairy Chimneys, Cappadocia",
+    "Easy",
+    "Türkiye • Central Anatolia • Nevşehir/Cappadocia • Rock cones",
+    "Türkiye • İç Anadolu • Kapadokya • Peri bacaları",
+    [38.6431, 34.8289],
+    "G%C3%B6reme",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Goreme_Valley_Cappadocia.jpg/800px-Goreme_Valley_Cappadocia.jpg"
+  ],
 
-  // ================= MEDIUM (50) =================
-  ["Galata Tower, Istanbul", "Medium", "Türkiye • Istanbul • Beyoğlu side of Golden Horn • Stone tower", "Türkiye • İstanbul • Haliç kuzeyi • Taş kule", [41.0256, 28.9741], "Galata_Tower"],
-  ["Library of Celsus, Ephesus", "Medium", "Türkiye • Aegean coast • Near İzmir/Selçuk • Ancient facade", "Türkiye • Ege kıyısı • İzmir/Selçuk yakını • Antik cephe", [37.9396, 27.3409], "Library_of_Celsus"],
-  ["Pamukkale Terraces, Denizli", "Medium", "Türkiye • Southwestern Anatolia • Denizli • White thermal pools", "Türkiye • Güneybatı Anadolu • Denizli • Beyaz travertenler", [37.9204, 29.1204], "Pamukkale"],
-  ["Sümela Monastery, Trabzon", "Medium", "Türkiye • Black Sea coast • Trabzon/Maçka • Cliff monastery", "Türkiye • Karadeniz kıyısı • Trabzon/Maçka • Uçurum manastırı", [40.6897, 39.6583], "S%C3%BCmela_Monastery"],
-  ["Mount Nemrut, Adıyaman", "Medium", "Türkiye • Southeastern Anatolia • Adıyaman • Stone heads on peak", "Türkiye • Güneydoğu Anadolu • Adıyaman • Zirvedeki taş başlar", [37.9806, 38.7408], "Mount_Nemrut"],
-  ["Rijksmuseum, Amsterdam", "Medium", "Western Europe • Netherlands • Amsterdam • Brick museum", "Batı Avrupa • Hollanda • Amsterdam • Tuğla müze binası", [52.3600, 4.8852], "Rijksmuseum"],
-  ["Atomium, Brussels", "Medium", "Western Europe • Belgium • Brussels • Connected metal spheres", "Batı Avrupa • Belçika • Brüksel • Metal kürelerden yapı", [50.8949, 4.3415], "Atomium"],
-  ["Belém Tower, Lisbon", "Medium", "Western Europe • Portugal • Lisbon • Tagus river stone tower", "Batı Avrupa • Portekiz • Lizbon • Nehir kıyısı taş kule", [38.6916, -9.2160], "Bel%C3%A9m_Tower"],
-  ["Milan Cathedral (Duomo), Italy", "Medium", "Southern Europe • Northern Italy • Milan • Spiky Gothic marble", "Güney Avrupa • Kuzey İtalya • Milano • Gotik mermer katedral", [45.4642, 9.1900], "Milan_Cathedral"],
-  ["Rialto Bridge, Venice", "Medium", "Southern Europe • Northern Italy • Venice • Arched canal bridge", "Güney Avrupa • Kuzey İtalya • Venedik • Kemerli kanal köprüsü", [45.4380, 12.3359], "Rialto_Bridge"],
-  ["Pont du Gard, France", "Medium", "Western Europe • Southern France • Near Nîmes • Roman bridge", "Batı Avrupa • Güney Fransa • Nîmes yakını • Antik su kemeri", [43.9473, 4.5355], "Pont_du_Gard"],
-  ["Mont Saint-Michel, France", "Medium", "Western Europe • Normandy coast • France • Tidal island abbey", "Batı Avrupa • Normandiya kıyısı • Fransa • Ada manastırı", [48.6361, -1.5115], "Mont-Saint-Michel"],
-  ["Wawel Castle, Kraków", "Medium", "Central/Eastern Europe • Poland • Kraków • Vistula hill castle", "Orta/Doğu Avrupa • Polonya • Kraków • Tepe üstü şato", [50.0540, 19.9354], "Wawel_Castle"],
-  ["Lake Bled Island, Slovenia", "Medium", "Central Europe • Slovenia • Julian Alps • Lake with church", "Orta Avrupa • Slovenya • Alpler • Adalı göl manzarası", [46.3636, 14.0938], "Lake_Bled"],
-  ["Walls of Dubrovnik, Croatia", "Medium", "Balkans / Adriatic • Southern Croatia • Dubrovnik • Sea walls", "Balkanlar / Adriyatik • Güney Hırvatistan • Dubrovnik • Surlar", [42.6419, 18.1086], "Walls_of_Dubrovnik"],
-  ["Plitvice Lakes, Croatia", "Medium", "Balkans • Central Croatia • Forest waterfalls & lakes", "Balkanlar • Orta Hırvatistan • Orman içi göller ve şelaleler", [44.8654, 15.5820], "Plitvice_Lakes_National_Park"],
-  ["Hallstatt Alpine Village, Austria", "Medium", "Central Europe • Austria • Salzburg region • Lakeside village", "Orta Avrupa • Avusturya • Salzburg bölgesi • Göl kıyısı köy", [47.5622, 13.6493], "Hallstatt"],
-  ["Matterhorn Peak, Alps", "Medium", "Europe • Switzerland & Italy border • Zermatt • Sharp peak", "Avrupa • İsviçre-İtalya sınırı • Zermatt • Sivri dağ zirvesi", [45.9763, 7.6586], "Matterhorn"],
-  ["Jet d'Eau, Geneva", "Medium", "Western Europe • Switzerland • Geneva • High lake water jet", "Batı Avrupa • İsviçre • Cenevre • Gölde yüksek su fıskiyesi", [46.2074, 6.1559], "Jet_d%27Eau"],
-  ["Nyhavn Harborfront, Copenhagen", "Medium", "Northern Europe • Denmark • Copenhagen • Colored canal houses", "Kuzey Avrupa • Danimarka • Kopenhag • Renkli liman evleri", [55.6800, 12.5906], "Nyhavn"],
-  ["Bryggen Wharf, Bergen", "Medium", "Northern Europe • Western Norway • Bergen • Wooden harbor row", "Kuzey Avrupa • Batı Norveç • Bergen • Ahşap liman evleri", [60.3973, 5.3245], "Bryggen"],
-  ["Vasa Museum, Stockholm", "Medium", "Northern Europe • Sweden • Stockholm • Historic wooden ship", "Kuzey Avrupa • İsveç • Stockholm • Tarihi ahşap savaş gemisi", [59.3280, 18.0914], "Vasa_Museum"],
-  ["Helsinki Cathedral, Finland", "Medium", "Northern Europe • Finland • Helsinki • White church & stairs", "Kuzey Avrupa • Finlandiya • Helsinki • Beyaz katedral ve merdiven", [60.1704, 24.9522], "Helsinki_Cathedral"],
-  ["Alexander Nevsky Cathedral, Tallinn", "Medium", "Baltic / Northern Europe • Estonia • Tallinn • Dome church", "Baltık / Kuzey Avrupa • Estonya • Tallinn • Kubbeli kilise", [59.4355, 24.7393], "Alexander_Nevsky_Cathedral,_Tallinn"],
-  ["Hawa Mahal, Jaipur", "Medium", "South Asia • India • Rajasthan • Jaipur pink lattice wall", "Güney Asya • Hindistan • Racastan • Jaipur pembe cephe", [26.9239, 75.8267], "Hawa_Mahal"],
-  ["Golden Temple, Amritsar", "Medium", "South Asia • India • Punjab • Amritsar • Gold shrine in pool", "Güney Asya • Hindistan • Pencap • Amritsar • Havuz içi altın yapı", [31.6200, 74.8765], "Golden_Temple"],
-  ["Wat Arun, Bangkok", "Medium", "Southeast Asia • Thailand • Bangkok • River temple spire", "Güneydoğu Asya • Tayland • Bangkok • Nehir kıyısı tapınak", [13.7437, 100.4889], "Wat_Arun"],
-  ["Batu Caves, Malaysia", "Medium", "Southeast Asia • Malaysia • Near Kuala Lumpur • Giant statue", "Güneydoğu Asya • Malezya • Kuala Lumpur yakını • Dev heykel", [3.2379, 101.6840], "Batu_Caves"],
-  ["Borobudur Temple, Indonesia", "Medium", "Southeast Asia • Indonesia • Java Island • Stepped stupa", "Güneydoğu Asya • Endonezya • Cava Adası • Basamaklı tapınak", [-7.6079, 110.2038], "Borobudur"],
-  ["Fushimi Inari Gates, Kyoto", "Medium", "East Asia • Japan • Kyoto • Red torii gate tunnel", "Doğu Asya • Japonya • Kyoto • Kırmızı torii kapı tüneli", [34.9671, 135.7727], "Fushimi_Inari-taisha"],
-  ["Himeji Castle, Japan", "Medium", "East Asia • Japan • Hyogo/Kansai • White feudal castle", "Doğu Asya • Japonya • Kansai bölgesi • Beyaz kale", [34.8394, 134.6939], "Himeji_Castle"],
-  ["Gyeongbokgung Palace, Seoul", "Medium", "East Asia • South Korea • Seoul • Traditional palace gate", "Doğu Asya • Güney Kore • Seul • Geleneksel saray kapısı", [37.5796, 126.9770], "Gyeongbokgung"],
-  ["Victoria Peak Skyline, Hong Kong", "Medium", "East Asia • South China coast • Hong Kong • Bay & high-rises", "Doğu Asya • Güney Çin kıyısı • Hong Kong • Liman ve gökdelenler", [22.2759, 114.1455], "Victoria_Peak_(Hong_Kong)"],
-  ["Lotte World Tower, Seoul", "Medium", "East Asia • South Korea • Seoul • Tall tapered glass tower", "Doğu Asya • Güney Kore • Seul • Sivrilen yüksek cam kule", [37.5126, 127.1025], "Lotte_World_Tower"],
-  ["Iguazu Falls, South America", "Medium", "South America • Brazil & Argentina border • Wide waterfalls", "Güney Amerika • Brezilya-Arjantin sınırı • Geniş şelaleler", [-25.6953, -54.4367], "Iguazu_Falls"],
-  ["Salar de Uyuni, Bolivia", "Medium", "South America • Western Bolivia • Andes • White salt plain", "Güney Amerika • Batı Bolivya • Andlar • Beyaz tuz düzlüğü", [-20.1338, -67.4891], "Salar_de_Uyuni"],
-  ["Casa Rosada, Buenos Aires", "Medium", "South America • Argentina • Buenos Aires • Pink palace building", "Güney Amerika • Arjantin • Buenos Aires • Pembe saray binası", [-34.6083, -58.3702], "Casa_Rosada"],
-  ["Palacio de La Moneda, Santiago", "Medium", "South America • Chile • Santiago • Central government palace", "Güney Amerika • Şili • Santiago • Tarihi saray binası", [-33.4429, -70.6539], "Palacio_de_La_Moneda"],
-  ["Teotihuacan Pyramids, Mexico", "Medium", "North America • Central Mexico • Near Mexico City • Sun pyramid", "Kuzey Amerika • Orta Meksika • Mexico City yakını • Piramit", [19.6925, -98.8438], "Teotihuacan"],
-  ["Lake Louise, Banff", "Medium", "North America • Western Canada • Alberta Rockies • Blue lake", "Kuzey Amerika • Batı Kanada • Alberta Kayalık Dağları • Göl", [51.4254, -116.1773], "Lake_Louise_(Alberta)"],
-  ["White House, Washington D.C.", "Medium", "North America • USA • Washington D.C. • White executive house", "Kuzey Amerika • ABD • Washington D.C. • Beyaz saray binası", [38.8977, -77.0365], "White_House"],
-  ["Lincoln Memorial, Washington D.C.", "Medium", "North America • USA • Washington D.C. • Greek-style columns", "Kuzey Amerika • ABD • Washington D.C. • Sütunlu anıt yapı", [38.8893, -77.0502], "Lincoln_Memorial"],
-  ["Monument Valley, USA", "Medium", "North America • USA • Utah/Arizona border • Red rock towers", "Kuzey Amerika • ABD • Utah-Arizona sınırı • Kızıl kaya kuleleri", [36.9980, -110.0985], "Monument_Valley"],
-  ["Uluru Rock, Australia", "Medium", "Oceania • Central Australia • Northern Territory • Red rock", "Okyanusya • Orta Avustralya • Kızıl dev kaya kütlesi", [-25.3444, 131.0369], "Uluru"],
-  ["Twelve Apostles, Australia", "Medium", "Oceania • Southern Australia • Victoria coast • Sea stacks", "Okyanusya • Güney Avustralya • Victoria kıyısı • Deniz kayaları", [-38.6621, 143.1051], "The_Twelve_Apostles_(Victoria)"],
-  ["Milford Sound, New Zealand", "Medium", "Oceania • New Zealand • South Island fjord • Steep cliffs", "Okyanusya • Yeni Zelanda • Güney Ada • Fiyort ve dik kayalar", [-44.6414, 167.8974], "Milford_Sound"],
-  ["Sky Tower, Auckland", "Medium", "Oceania • New Zealand • North Island • Auckland tower", "Okyanusya • Yeni Zelanda • Kuzey Ada • Auckland gözlem kulesi", [-36.8485, 174.7622], "Sky_Tower_(Auckland)"],
-  ["Luxor Temple, Egypt", "Medium", "North Africa • Egypt • Upper Egypt / Nile • Ancient columns", "Kuzey Afrika • Mısır • Nil kıyısı • Antik sütunlu tapınak", [25.6995, 32.6397], "Luxor_Temple"],
-  ["Hassan II Mosque, Casablanca", "Medium", "North Africa • Morocco • Atlantic coast • Casablanca minaret", "Kuzey Afrika • Fas • Atlas Okyanusu kıyısı • Kazablanka camisi", [33.6086, -7.6327], "Hassan_II_Mosque"],
-  ["Stari Most Bridge, Mostar", "Medium", "Balkans • Bosnia and Herzegovina • Mostar • Arch over river", "Balkanlar • Bosna-Hersek • Mostar • Nehir üstü tek kemer köprü", [43.3373, 17.8150], "Stari_Most"],
+  // ================= MEDIUM =================
+  [
+    "Galata Tower, Istanbul",
+    "Medium",
+    "Türkiye • Istanbul • Beyoğlu side of Golden Horn • Stone tower",
+    "Türkiye • İstanbul • Haliç kuzeyi • Taş kule",
+    [41.0256, 28.9741],
+    "Galata_Tower",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Galata_Tower_Istanbul.jpg/800px-Galata_Tower_Istanbul.jpg"
+  ],
+  [
+    "Pamukkale Terraces, Denizli",
+    "Medium",
+    "Türkiye • Southwestern Anatolia • Denizli • White thermal pools",
+    "Türkiye • Güneybatı Anadolu • Denizli • Beyaz travertenler",
+    [37.9204, 29.1204],
+    "Pamukkale",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Pamukkale_travertines_in_Turkey.jpg/800px-Pamukkale_travertines_in_Turkey.jpg"
+  ],
+  [
+    "Mont Saint-Michel, France",
+    "Medium",
+    "Western Europe • Normandy coast • France • Tidal island abbey",
+    "Batı Avrupa • Normandiya kıyısı • Fransa • Ada manastırı",
+    [48.6361, -1.5115],
+    "Mont-Saint-Michel",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Mont-Saint-Michel_vu_du_ciel.jpg/800px-Mont-Saint-Michel_vu_du_ciel.jpg"
+  ],
+  [
+    "Matterhorn Peak, Alps",
+    "Medium",
+    "Europe • Switzerland & Italy border • Zermatt • Sharp peak",
+    "Avrupa • İsviçre-İtalya sınırı • Zermatt • Sivri dağ zirvesi",
+    [45.9763, 7.6586],
+    "Matterhorn",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Matterhorn_from_Domh%C3%BCtte_-_2010.jpg/800px-Matterhorn_from_Domh%C3%BCtte_-_2010.jpg"
+  ],
+  [
+    "Iguazu Falls, South America",
+    "Medium",
+    "South America • Brazil & Argentina border • Wide waterfalls",
+    "Güney Amerika • Brezilya-Arjantin sınırı • Geniş şelaleler",
+    [-25.6953, -54.4367],
+    "Iguazu_Falls",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Cataratas_do_Igua%C3%A7u_-_Brazil_side.jpg/800px-Cataratas_do_Igua%C3%A7u_-_Brazil_side.jpg"
+  ],
+  [
+    "Lake Louise, Banff",
+    "Medium",
+    "North America • Western Canada • Alberta Rockies • Blue lake",
+    "Kuzey Amerika • Batı Kanada • Alberta Kayalık Dağları • Göl",
+    [51.4254, -116.1773],
+    "Lake_Louise_(Alberta)",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Lake_Louise_Banff_National_Park.jpg/800px-Lake_Louise_Banff_National_Park.jpg"
+  ],
+  [
+    "Uluru Rock, Australia",
+    "Medium",
+    "Oceania • Central Australia • Northern Territory • Red rock",
+    "Okyanusya • Orta Avustralya • Kızıl dev kaya kütlesi",
+    [-25.3444, 131.0369],
+    "Uluru",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Uluru%2C_Australia.jpg/800px-Uluru%2C_Australia.jpg"
+  ],
+  [
+    "Milan Cathedral (Duomo), Italy",
+    "Medium",
+    "Southern Europe • Northern Italy • Milan • Spiky Gothic marble",
+    "Güney Avrupa • Kuzey İtalya • Milano • Gotik mermer katedral",
+    [45.4642, 9.1900],
+    "Milan_Cathedral",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Milano_Duomo_facciata.jpg/800px-Milano_Duomo_facciata.jpg"
+  ],
+  [
+    "Rialto Bridge, Venice",
+    "Medium",
+    "Southern Europe • Northern Italy • Venice • Arched canal bridge",
+    "Güney Avrupa • Kuzey İtalya • Venedik • Kemerli kanal köprüsü",
+    [45.4380, 12.3359],
+    "Rialto_Bridge",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Ponte_di_Rialto_%28Venice%29.jpg/800px-Ponte_di_Rialto_%28Venice%29.jpg"
+  ],
+  [
+    "Nyhavn Harborfront, Copenhagen",
+    "Medium",
+    "Northern Europe • Denmark • Copenhagen • Colored canal houses",
+    "Kuzey Avrupa • Danimarka • Kopenhag • Renkli liman evleri",
+    [55.6800, 12.5906],
+    "Nyhavn",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Nyhavn_Copenhagen_Denmark.jpg/800px-Nyhavn_Copenhagen_Denmark.jpg"
+  ],
 
-  // ================= HARD (50) =================
-  ["Ihlara Canyon, Aksaray", "Hard", "Türkiye • Central Anatolia • Aksaray province • Green canyon", "Türkiye • İç Anadolu • Aksaray • Yeşil vadi ve kanyon", [38.2450, 34.3036], "Ihlara_Valley"],
-  ["Gaziantep Castle, Türkiye", "Hard", "Türkiye • Southeastern Anatolia • Gaziantep city center • Castle", "Türkiye • Güneydoğu Anadolu • Gaziantep • Şehir merkezi kalesi", [37.0661, 37.3833], "Gaziantep_Castle"],
-  ["Hattusa Ruins, Çorum", "Hard", "Türkiye • North-Central Anatolia • Çorum/Boğazkale • Hittites", "Türkiye • Orta Karadeniz/İç Anadolu • Çorum • Hitit başkenti", [40.0178, 34.6156], "Hattusa"],
-  ["Çatalhöyük Mound, Konya", "Hard", "Türkiye • Central Anatolia • Konya/Çumra • Ancient mound", "Türkiye • İç Anadolu • Konya/Çumra • Neolitik höyük", [37.6675, 32.8278], "%C3%87atalh%C3%B6y%C3%BCk"],
-  ["Safranbolu Timber Houses, Karabük", "Hard", "Türkiye • Western Black Sea • Karabük • Traditional houses", "Türkiye • Batı Karadeniz • Karabük • Geleneksel konaklar", [41.2436, 32.6942], "Safranbolu"],
-  ["Pergamon Acropolis, İzmir", "Hard", "Türkiye • Aegean coast • İzmir/Bergama • Steep hilltop ruins", "Türkiye • Ege kıyısı • İzmir/Bergama • Dik yamaç antik kent", [39.1325, 27.1844], "Pergamon"],
-  ["Aspendos Roman Theatre, Antalya", "Hard", "Türkiye • Mediterranean coast • Antalya/Serik • Ancient theatre", "Türkiye • Akdeniz kıyısı • Antalya/Serik • Antik tiyatro", [36.9386, 31.1722], "Aspendos"],
-  ["Butterfly Valley, Fethiye", "Hard", "Türkiye • Southwestern coast • Muğla/Fethiye • Coastal cove", "Türkiye • Güneybatı kıyısı • Muğla/Fethiye • Kelebekler Vadisi", [36.4939, 29.1244], "Butterfly_Valley_(Turkey)"],
-  ["Uzungöl Lake & Valley, Trabzon", "Hard", "Türkiye • Eastern Black Sea • Trabzon/Çaykara • Mountain lake", "Türkiye • Doğu Karadeniz • Trabzon/Çaykara • Dağ gölü", [40.6186, 40.2939], "Uzung%C3%B6l"],
-  ["Ishak Pasha Palace, Ağrı", "Hard", "Türkiye • Eastern Anatolia • Ağrı/Doğubayazıt • Mountain palace", "Türkiye • Doğu Anadolu • Ağrı/Doğubayazıt • Dağ üstü saray", [39.5186, 44.1292], "Ishak_Pasha_Palace"],
-  ["Ani Archaeological Site, Kars", "Hard", "Türkiye • Northeast near Armenia border • Kars • Ancient ruins", "Türkiye • Kuzeydoğu (Ermenistan sınırı) • Kars • Antik kent", [40.5064, 43.5725], "Ani"],
-  ["Mardin Old City Skyline, Türkiye", "Hard", "Türkiye • Southeastern Anatolia • Mardin • Stone hill houses", "Türkiye • Güneydoğu Anadolu • Mardin • Taş yamaç evleri", [37.3131, 40.7350], "Mardin"],
-  ["Rila Monastery, Bulgaria", "Hard", "Balkans • Southwestern Bulgaria • Rila Mountains • Monastery", "Balkanlar • Güneybatı Bulgaristan • Rila Dağları • Manastır", [42.1333, 23.3400], "Rila_Monastery"],
-  ["Meteora Cliffs & Monasteries, Greece", "Hard", "Balkans • Central Greece • Thessaly • Monasteries on rocks", "Balkanlar • Orta Yunanistan • Teselya • Kaya üstü manastırlar", [39.7217, 21.6306], "Meteora"],
-  ["Pena Palace, Sintra", "Hard", "Western Europe • Portugal • Near Lisbon • Colorful hill palace", "Batı Avrupa • Portekiz • Lizbon yakını • Renkli tepe sarayı", [38.7876, -9.3906], "Pena_Palace"],
-  ["Tower of Hercules, A Coruña", "Hard", "Western Europe • Northwest Spain • Galicia coast • Lighthouse", "Batı Avrupa • Kuzeybatı İspanya • Galiçya • Antik deniz feneri", [43.3859, -8.4065], "Tower_of_Hercules"],
-  ["Giant's Causeway, Northern Ireland", "Hard", "British Isles • Northern Ireland • Antrim coast • Basalt pillars", "Britanya Adaları • Kuzey İrlanda • Bazalt sütun sahili", [55.2408, -6.5116], "Giant%27s_Causeway"],
-  ["Skellig Michael, Ireland", "Hard", "British Isles • Southwest Ireland • Atlantic rocky island", "Britanya Adaları • Güneybatı İrlanda • Atlas kayalık adası", [51.7717, -10.5397], "Skellig_Michael"],
-  ["Reine Village & Fjords, Lofoten", "Hard", "Northern Europe • Northern Norway • Lofoten islands • Fjords", "Kuzey Avrupa • Kuzey Norveç • Lofoten adaları • Fiyort köyü", [67.9324, 13.0886], "Reine"],
-  ["Þingvellir Rift Valley, Iceland", "Hard", "North Atlantic • Iceland • Near Reykjavik • Rift valley & lake", "Kuzey Atlantik • İzlanda • Reykjavik yakını • Rift vadisi", [64.2559, -21.1295], "%C3%9Eingvellir"],
-  ["Preikestolen Cliff, Norway", "Hard", "Northern Europe • Southwest Norway • Near Stavanger • Cliff", "Kuzey Avrupa • Güneybatı Norveç • Stavanger yakını • Uçurum", [58.9864, 6.1904], "Preikestolen"],
-  ["Curonian Spit Dunes, Baltic", "Hard", "Baltic coast • Lithuania & Kaliningrad • Long sand peninsula", "Baltık kıyısı • Litvanya / Kaliningrad • Uzun kum yarımadası", [55.2750, 21.0250], "Curonian_Spit"],
-  ["Wooden Churches of Maramureş", "Hard", "Eastern Europe • Northern Romania • Maramureş • Wooden church", "Doğu Avrupa • Kuzey Romanya • Maramureş • Ahşap kilise", [47.7400, 24.0300], "Wooden_churches_of_Maramure%C8%99"],
-  ["Bran Castle, Transylvania", "Hard", "Central/Eastern Europe • Romania • Transylvania • Hill castle", "Orta/Doğu Avrupa • Romanya • Transilvanya • Tepe kalesi", [45.5150, 25.3672], "Bran_Castle"],
-  ["Kizhi Pogost, Lake Onega", "Hard", "Eastern Europe • Northwest Russia • Karelia • Wooden domes", "Doğu Avrupa • Kuzeybatı Rusya • Karelya • Ahşap kubbeler", [62.0675, 35.2206], "Kizhi_Pogost"],
-  ["Registan Square, Samarkand", "Hard", "Central Asia • Uzbekistan • Samarkand • Turquoise tile plaza", "Orta Asya • Özbekistan • Semerkant • Turkuaz çinili meydan", [39.6542, 66.9756], "Registan"],
-  ["Maiden Tower, Baku", "Hard", "Caucasus • Azerbaijan • Baku old city • Stone tower by sea", "Kafkasya • Azerbaycan • Bakü • Deniz kıyısında taş kule", [40.3661, 49.8372], "Maiden_Tower_(Baku)"],
-  ["Garni Temple, Armenia", "Hard", "Caucasus • Armenia • Near Yerevan • Classical temple", "Kafkasya • Ermenistan • Erivan yakını • Antik sütunlu tapınak", [40.1122, 44.7303], "Temple_of_Garni"],
-  ["Ellora Caves, India", "Hard", "South Asia • Western India • Maharashtra • Rock-cut caves", "Güney Asya • Batı Hindistan • Maharaştra • Kaya oyma tapınak", [20.0268, 75.1791], "Ellora_Caves"],
-  ["Bagan Temple Plain, Myanmar", "Hard", "Southeast Asia • Central Myanmar • Mandalay region • Pagodas", "Güneydoğu Asya • Orta Myanmar • Antik tapınak ovası", [21.1717, 94.8585], "Bagan"],
-  ["Ha Long Bay Karsts, Vietnam", "Hard", "Southeast Asia • Northern Vietnam • Gulf of Tonkin • Karst bay", "Güneydoğu Asya • Kuzey Vietnam • Tonkin Körfezi • Kaya adalar", [20.9101, 107.1839], "H%E1%BA%A1_Long_Bay"],
-  ["Jiuzhaigou Valley, Sichuan", "Hard", "East Asia • Southwest China • Sichuan • Colored mountain lakes", "Doğu Asya • Güneybatı Çin • Siçuan • Renkli dağ gölleri", [33.2600, 103.9186], "Jiuzhaigou_Valley"],
-  ["Zhangjiajie Sandstone Pillars", "Hard", "East Asia • Central-South China • Hunan • Tall rock columns", "Doğu Asya • Güney-Orta Çin • Hunan • Yüksek kaya sütunları", [29.3249, 110.4343], "Zhangjiajie_National_Forest_Park"],
-  ["Shirakawa-go Village, Japan", "Hard", "East Asia • Central Japan • Gifu/Hida • Steep thatched roofs", "Doğu Asya • Orta Japonya • Gifu • Dik çatılı köy evleri", [36.2706, 136.9061], "Historic_Villages_of_Shirakawa-g%C3%B4_and_Gokayama"],
-  ["Seongsan Ilchulbong, Jeju", "Hard", "East Asia • South Korea • Jeju Island • Volcanic sea crater", "Doğu Asya • Güney Kore • Jeju Adası • Deniz kenarı krater", [33.4584, 126.9425], "Seongsan_Ilchulbong"],
-  ["Wadi Rum Sandstone Valley, Jordan", "Hard", "Middle East • Southern Jordan • Desert canyon • Red rocks", "Orta Doğu • Güney Ürdün • Çöl vadisi • Kızıl kaya oluşumları", [29.5764, 35.4212], "Wadi_Rum"],
-  ["Socotra Dragon Blood Trees", "Hard", "Arabian Sea • Yemen island • Umbrella-shaped desert trees", "Umman Denizi • Yemen adası • Şemsiye şekilli ağaçlar", [12.4634, 53.8237], "Socotra"],
-  ["Aït Benhaddou Ksar, Morocco", "Hard", "North Africa • Southern Morocco • Atlas foothills • Clay town", "Kuzey Afrika • Güney Fas • Atlas etekleri • Kerpiç yerleşim", [31.0470, -7.1297], "A%C3%AFt_Benhaddou"],
-  ["Lalibela Rock Churches, Ethiopia", "Hard", "East Africa • Northern Ethiopia • Highlands • Rock churches", "Doğu Afrika • Kuzey Etiyopya • Kayaya oyulmuş kiliseler", [12.0319, 39.0476], "Rock-Hewn_Churches,_Lalibela"],
-  ["Sossusvlei Red Dunes, Namibia", "Hard", "Southern Africa • Namibia • Namib Desert • Tall red dunes", "Güney Afrika • Namibya • Namib Çölü • Yüksek kızıl kumullar", [-24.7275, 15.3358], "Sossusvlei"],
-  ["Victoria Falls, Zambezi", "Hard", "Southern Africa • Zambia & Zimbabwe border • Zambezi River", "Güney Afrika • Zambiya-Zimbabve sınırı • Zambezi şelalesi", [-17.9243, 25.8572], "Victoria_Falls"],
-  ["Mount Kilimanjaro, Tanzania", "Hard", "East Africa • Northern Tanzania • Near Kenya • Snow peak", "Doğu Afrika • Kuzey Tanzanya • Kenya yakını • Karlı zirve", [-3.0674, 37.3556], "Mount_Kilimanjaro"],
-  ["Lençóis Maranhenses, Brazil", "Hard", "South America • Northeast Brazil • Maranhão • Dunes & pools", "Güney Amerika • Kuzeydoğu Brezilya • Kumullar ve göletler", [-2.4833, -43.1167], "Len%C3%A7%C3%B3is_Maranhenses_National_Park"],
-  ["Perito Moreno Glacier, Argentina", "Hard", "South America • Southern Patagonia • Argentina • Ice glacier", "Güney Amerika • Güney Patagonya • Arjantin • Buzul duvarı", [-50.4957, -73.0485], "Perito_Moreno_Glacier"],
-  ["Torres del Paine Towers, Chile", "Hard", "South America • Southern Patagonia • Chile • Granite towers", "Güney Amerika • Güney Patagonya • Şili • Granit kuleler", [-50.9423, -72.9660], "Torres_del_Paine_National_Park"],
-  ["Bartolomé Island, Galápagos", "Hard", "Pacific Ocean • Ecuador • Galápagos Islands • Volcanic peak", "Büyük Okyanus • Ekvador • Galapagos Adaları • Volkanik ada", [-0.2820, -90.5500], "Bartolom%C3%A9_Island"],
-  ["Tikal Temple I, Guatemala", "Hard", "Central America • Northern Guatemala • Petén jungle • Maya", "Orta Amerika • Kuzey Guatemala • Orman içi Maya piramidi", [17.2220, -89.6237], "Tikal"],
-  ["Denali Peak, Alaska", "Hard", "North America • USA • Alaska • High snow mountain peak", "Kuzey Amerika • ABD • Alaska • Yüksek karlı dağ zirvesi", [63.0695, -151.0074], "Denali"],
-  ["Mount Otemanu, Bora Bora", "Hard", "South Pacific • French Polynesia • Bora Bora • Lagoon peak", "Güney Pasifik • Fransız Polinezyası • Lagün ortası zirve", [-16.4980, -151.7415], "Bora_Bora"],
-  ["Kakadu Escarpment, Australia", "Hard", "Oceania • Northern Australia • Northern Territory • Cliffs", "Okyanusya • Kuzey Avustralya • Kayalık uçurum bölgesi", [-12.6700, 132.4500], "Kakadu_National_Park"]
+  // ================= HARD =================
+  [
+    "Meteora Cliffs & Monasteries, Greece",
+    "Hard",
+    "Balkans • Central Greece • Thessaly • Monasteries on rocks",
+    "Balkanlar • Orta Yunanistan • Teselya • Kaya üstü manastırlar",
+    [39.7217, 21.6306],
+    "Meteora",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Meteora_monastery_on_cliff.jpg/800px-Meteora_monastery_on_cliff.jpg"
+  ],
+  [
+    "Hallstatt Alpine Village, Austria",
+    "Hard",
+    "Central Europe • Austria • Salzburg region • Lakeside village",
+    "Orta Avrupa • Avusturya • Salzburg bölgesi • Göl kıyısı köy",
+    [47.5622, 13.6493],
+    "Hallstatt",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Hallstatt_005.jpg/800px-Hallstatt_005.jpg"
+  ],
+  [
+    "Plitvice Lakes, Croatia",
+    "Hard",
+    "Balkans • Central Croatia • Forest waterfalls & lakes",
+    "Balkanlar • Orta Hırvatistan • Orman içi göller ve şelaleler",
+    [44.8654, 15.5820],
+    "Plitvice_Lakes_National_Park",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Plitvice_Lakes_National_Park_Croatia.jpg/800px-Plitvice_Lakes_National_Park_Croatia.jpg"
+  ],
+  [
+    "Uzungöl Lake & Valley, Trabzon",
+    "Hard",
+    "Türkiye • Eastern Black Sea • Trabzon/Çaykara • Mountain lake",
+    "Türkiye • Doğu Karadeniz • Trabzon/Çaykara • Dağ gölü",
+    [40.6186, 40.2939],
+    "Uzung%C3%B6l",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Uzung%C3%B6l_Trabzon_Turkey.jpg/800px-Uzung%C3%B6l_Trabzon_Turkey.jpg"
+  ],
+  [
+    "Perito Moreno Glacier, Argentina",
+    "Hard",
+    "South America • Southern Patagonia • Argentina • Ice glacier",
+    "Güney Amerika • Güney Patagonya • Arjantin • Buzul duvarı",
+    [-50.4957, -73.0485],
+    "Perito_Moreno_Glacier",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Perito_Moreno_Glacier_Patagonia.jpg/800px-Perito_Moreno_Glacier_Patagonia.jpg"
+  ],
+  [
+    "Victoria Falls, Zambezi",
+    "Hard",
+    "Southern Africa • Zambia & Zimbabwe border • Zambezi River",
+    "Güney Afrika • Zambiya-Zimbabve sınırı • Zambezi şelalesi",
+    [-17.9243, 25.8572],
+    "Victoria_Falls",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Victoria_Falls_from_the_air.jpg/800px-Victoria_Falls_from_the_air.jpg"
+  ],
+  [
+    "Mount Kilimanjaro, Tanzania",
+    "Hard",
+    "East Africa • Northern Tanzania • Near Kenya • Snow peak",
+    "Doğu Afrika • Kuzey Tanzanya • Kenya yakını • Karlı zirve",
+    [-3.0674, 37.3556],
+    "Mount_Kilimanjaro",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Mount_Kilimanjaro_from_space.jpg/800px-Mount_Kilimanjaro_from_space.jpg"
+  ],
+  [
+    "Salar de Uyuni, Bolivia",
+    "Hard",
+    "South America • Western Bolivia • Andes • White salt plain",
+    "Güney Amerika • Batı Bolivya • Andlar • Beyaz tuz düzlüğü",
+    [-20.1338, -67.4891],
+    "Salar_de_Uyuni",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Salar_de_Uyuni_Salt_Flats.jpg/800px-Salar_de_Uyuni_Salt_Flats.jpg"
+  ]
 ];
 
 const UI_TEXT = {
   en: {
-    subtitle: "GMT 458 Web GIS • UCL Night Edition",
+    subtitle: "GMT 458 Web GIS • UK",
     duelQuestion: "Can you win this duel?",
     playBtn: "Play",
     settingsBtn: "Settings",
     roundsSetting: "Rounds (6 - 9):",
     durationSetting: "Round Time (10 - 30s):",
+    soundSetting: "Sound:",
+    soundOn: "On",
+    soundOff: "Off",
     languageChoice: "Language:",
     englishLbl: "English",
     turkishLbl: "Turkish",
@@ -201,7 +414,7 @@ const UI_TEXT = {
     finalScore: "Final Score",
     finalBest: "Best Score",
     playAgain: "Play Again",
-    globeTitle: "GeoGoal • UCL Night",
+    globeTitle: "GeoGoal • UK",
     duelStartingSub: "The duel is starting...",
     penaltyCheckSub: "Let's see if it's a goal...",
     loadingUniquePlaces: (loaded, total) => `Loading unique places (${loaded}/${total})`,
@@ -216,12 +429,15 @@ const UI_TEXT = {
     bannerNoGoal: "İnanılmaz!"
   },
   tr: {
-    subtitle: "GMT 458 Web GIS • Şampiyonlar Ligi Gecesi",
+    subtitle: "GMT 458 Web GIS • UK",
     duelQuestion: "Bu düelloyu kazanabilir misin?",
     playBtn: "Oyna",
     settingsBtn: "Ayarlar",
     roundsSetting: "Tur Sayısı (6 - 9):",
     durationSetting: "Tur Süresi (10 - 30 sn):",
+    soundSetting: "Ses:",
+    soundOn: "Açık",
+    soundOff: "Kapalı",
     languageChoice: "Dil:",
     englishLbl: "İngilizce",
     turkishLbl: "Türkçe",
@@ -257,7 +473,7 @@ const UI_TEXT = {
     finalScore: "Toplam Puan",
     finalBest: "En Yüksek Skor",
     playAgain: "Tekrar Oyna",
-    globeTitle: "GeoGoal • Şampiyonlar Ligi",
+    globeTitle: "GeoGoal • UK",
     duelStartingSub: "Düello başlıyor...",
     penaltyCheckSub: "Bakalım gol olacak mı...",
     loadingUniquePlaces: (loaded, total) => `Eşsiz yerler yükleniyor (${loaded}/${total})`,
@@ -279,16 +495,21 @@ function t(key) {
   return UI_TEXT[currentLang][key];
 }
 
-// Web Audio Synthesizer: selection theme + victory fanfare + miss theme
+// Web Audio Synthesizer: soft welcome theme + selection theme + victory fanfare + miss theme
 const soundEngine = (() => {
   let ctxAudio = null;
+  let soundEnabled = true;
+  let welcomeInterval = null;
+  let welcomeStep = 0;
   let themeInterval = null;
   let stepIndex = 0;
 
+  const welcomeNotes = [261.63, 329.63, 392.0, 493.88, 392.0, 329.63, 293.66, 392.0];
   const normalNotes = [261.63, 329.63, 392.0, 523.25, 392.0, 349.23, 440.0, 392.0];
   const urgentNotes = [329.63, 392.0, 493.88, 523.25, 587.33, 523.25, 493.88, 392.0];
 
   function ensureContext() {
+    if (!soundEnabled) return null;
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return null;
     if (!ctxAudio) {
@@ -301,6 +522,7 @@ const soundEngine = (() => {
   }
 
   function playTone(audio, { freq, type = "triangle", startOffset = 0, duration = 0.2, peak = 0.06, slideTo = null }) {
+    if (!soundEnabled || !audio) return;
     const now = audio.currentTime + startOffset;
     const osc = audio.createOscillator();
     const gain = audio.createGain();
@@ -312,7 +534,7 @@ const soundEngine = (() => {
     }
 
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(peak, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(peak, now + 0.025);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
     osc.connect(gain);
@@ -321,7 +543,39 @@ const soundEngine = (() => {
     osc.stop(now + duration + 0.02);
   }
 
+  function playWelcomeBeat() {
+    if (!soundEnabled) return;
+    const audio = ensureContext();
+    if (!audio) return;
+
+    const freq = welcomeNotes[welcomeStep % welcomeNotes.length];
+    welcomeStep += 1;
+    playTone(audio, {
+      freq,
+      type: "sine",
+      startOffset: 0,
+      duration: 0.42,
+      peak: 0.022
+    });
+  }
+
+  function startWelcomeTheme() {
+    stopSelectionTheme();
+    if (!soundEnabled || welcomeInterval !== null) return;
+    playWelcomeBeat();
+    welcomeInterval = setInterval(playWelcomeBeat, 460);
+  }
+
+  function stopWelcomeTheme() {
+    if (welcomeInterval !== null) {
+      clearInterval(welcomeInterval);
+      welcomeInterval = null;
+    }
+    welcomeStep = 0;
+  }
+
   function playThemeBeat(isUrgent) {
+    if (!soundEnabled) return;
     const audio = ensureContext();
     if (!audio) return;
 
@@ -349,6 +603,12 @@ const soundEngine = (() => {
   }
 
   function updateSelectionTheme(secondsLeft) {
+    stopWelcomeTheme();
+    if (!soundEnabled) {
+      stopSelectionTheme();
+      return;
+    }
+
     const isUrgent = secondsLeft <= 4;
     const intervalMs = isUrgent ? 175 : 290;
 
@@ -370,6 +630,8 @@ const soundEngine = (() => {
 
   function playGoalFanfare() {
     stopSelectionTheme();
+    stopWelcomeTheme();
+    if (!soundEnabled) return;
     const audio = ensureContext();
     if (!audio) return;
 
@@ -384,6 +646,8 @@ const soundEngine = (() => {
 
   function playMissTheme() {
     stopSelectionTheme();
+    stopWelcomeTheme();
+    if (!soundEnabled) return;
     const audio = ensureContext();
     if (!audio) return;
 
@@ -396,31 +660,49 @@ const soundEngine = (() => {
     missNotes.forEach((n) => playTone(audio, { ...n, type: "sine" }));
   }
 
+  function setSoundEnabled(enabled) {
+    soundEnabled = Boolean(enabled);
+    if (!soundEnabled) {
+      stopWelcomeTheme();
+      stopSelectionTheme();
+    } else if (ctxAudio && ctxAudio.state === "suspended") {
+      ctxAudio.resume().catch(() => {});
+    }
+  }
+
+  function isSoundEnabled() {
+    return soundEnabled;
+  }
+
   return {
+    startWelcomeTheme,
+    stopWelcomeTheme,
     updateSelectionTheme,
     stopSelectionTheme,
     playGoalFanfare,
-    playMissTheme
+    playMissTheme,
+    setSoundEnabled,
+    isSoundEnabled
   };
 })();
 
-const LOCATIONS_POOL = RAW_LOCATIONS.map(([name, difficulty, clueEN, clueTR, coords, wikiTitle], idx) => ({
+const LOCATIONS_POOL = RAW_LOCATIONS.map(([name, difficulty, clueEN, clueTR, coords, wikiTitle, directPhotoUrl], idx) => ({
   id: idx + 1,
   name,
   difficulty,
   clueEN,
   clueTR,
   coords,
-  wikiTitle
+  wikiTitle,
+  directPhotoUrl
 }));
 
 const DEFAULT_ROUNDS = 6;
 const DEFAULT_DURATION = 15;
 const HIGHSCORE_KEY = "geogoal_highscore";
-const imageUrlCache = new Map();
 const resolvedImageCache = new Map();
 const FALLBACK_PHOTO_URL =
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Ortakoy_Mosque_and_Bosphorus_Bridge.jpg/800px-Ortakoy_Mosque_and_Bosphorus_Bridge.jpg";
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg/800px-Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg";
 
 function clampInt(val, min, max, fallback) {
   const num = Number.parseInt(val, 10);
@@ -428,31 +710,22 @@ function clampInt(val, min, max, fallback) {
   return Math.min(max, Math.max(min, num));
 }
 
-async function fetchLandmarkImageUrl(wikiTitle) {
-  if (imageUrlCache.has(wikiTitle)) {
-    return imageUrlCache.get(wikiTitle);
+function getCandidateUrls(locationItem) {
+  const candidates = [];
+  if (locationItem && locationItem.directPhotoUrl) {
+    candidates.push(locationItem.directPhotoUrl);
   }
-  try {
-    const res = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`
+  if (locationItem && locationItem.wikiTitle) {
+    candidates.push(
+      `https://commons.wikimedia.org/wiki/Special:FilePath/${locationItem.wikiTitle}.jpg?width=800`,
+      `https://commons.wikimedia.org/wiki/Special:FilePath/${locationItem.wikiTitle}.jpg?width=600`
     );
-    if (res.ok) {
-      const data = await res.json();
-      const url = (data.thumbnail && data.thumbnail.source) || (data.originalimage && data.originalimage.source);
-      if (url) {
-        imageUrlCache.set(wikiTitle, url);
-        return url;
-      }
-    }
-  } catch (_) {
-    // Fallback below
   }
-  const fallback = `https://commons.wikimedia.org/wiki/Special:FilePath/${wikiTitle}.jpg?width=800`;
-  imageUrlCache.set(wikiTitle, fallback);
-  return fallback;
+  candidates.push(FALLBACK_PHOTO_URL);
+  return [...new Set(candidates)];
 }
 
-function loadSingleImageWithTimeout(src, timeoutMs = 4500) {
+function tryLoadUrlWithTimeout(src, timeoutMs = 4500) {
   return new Promise((resolve) => {
     const img = new Image();
     let settled = false;
@@ -461,7 +734,7 @@ function loadSingleImageWithTimeout(src, timeoutMs = 4500) {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      resolve(ok ? src : FALLBACK_PHOTO_URL);
+      resolve(ok ? src : null);
     };
 
     const timer = setTimeout(() => finish(false), timeoutMs);
@@ -471,7 +744,26 @@ function loadSingleImageWithTimeout(src, timeoutMs = 4500) {
   });
 }
 
-// Resolves & preloads all round photos so rounds start with ready images
+async function resolveWorkingImageUrl(locationItem) {
+  const key = locationItem.wikiTitle || locationItem.name;
+  if (resolvedImageCache.has(key)) {
+    return resolvedImageCache.get(key);
+  }
+
+  const candidates = getCandidateUrls(locationItem);
+  for (let i = 0; i < candidates.length; i++) {
+    const loadedUrl = await tryLoadUrlWithTimeout(candidates[i], 4500);
+    if (loadedUrl) {
+      resolvedImageCache.set(key, loadedUrl);
+      return loadedUrl;
+    }
+  }
+
+  resolvedImageCache.set(key, FALLBACK_PHOTO_URL);
+  return FALLBACK_PHOTO_URL;
+}
+
+// Resolves & preloads all round photos so every single round has a loaded landmark image
 async function preloadAllRoundImages(onProgress) {
   const qs = game.getQuestions();
   let completed = 0;
@@ -479,13 +771,7 @@ async function preloadAllRoundImages(onProgress) {
 
   await Promise.all(
     qs.map(async (q) => {
-      const rawUrl = await fetchLandmarkImageUrl(q.wikiTitle);
-      let finalSrc = await loadSingleImageWithTimeout(rawUrl, 4500);
-      if (finalSrc === FALLBACK_PHOTO_URL) {
-        const commonsAlt = `https://commons.wikimedia.org/wiki/Special:FilePath/${q.wikiTitle}.jpg?width=800`;
-        finalSrc = await loadSingleImageWithTimeout(commonsAlt, 3500);
-      }
-      resolvedImageCache.set(q.wikiTitle, finalSrc);
+      await resolveWorkingImageUrl(q);
       completed += 1;
       if (onProgress) onProgress(completed, qs.length);
     })
@@ -644,8 +930,10 @@ const el = {
   settingsPanel: document.getElementById("settings-panel"),
   lblRoundsSetting: document.getElementById("lbl-rounds-setting"),
   lblDurationSetting: document.getElementById("lbl-duration-setting"),
+  lblSoundSetting: document.getElementById("lbl-sound-setting"),
   roundsInput: document.getElementById("rounds-input"),
   durationInput: document.getElementById("duration-input"),
+  soundToggleBtn: document.getElementById("sound-toggle-btn"),
   lblLanguageChoice: document.getElementById("lbl-language-choice"),
   langEnBtn: document.getElementById("lang-en-btn"),
   langTrBtn: document.getElementById("lang-tr-btn"),
@@ -736,6 +1024,8 @@ function applyLanguageUI() {
   el.settingsToggleBtn.textContent = t("settingsBtn");
   el.lblRoundsSetting.textContent = t("roundsSetting");
   el.lblDurationSetting.textContent = t("durationSetting");
+  el.lblSoundSetting.textContent = t("soundSetting");
+  el.soundToggleBtn.textContent = soundEngine.isSoundEnabled() ? t("soundOn") : t("soundOff");
 
   el.subtitleText.textContent = t("subtitle");
   el.lblRound.textContent = t("round");
@@ -865,15 +1155,15 @@ function drawFloodlights(tick) {
   towers.forEach((tx, idx) => {
     const pulse = 0.06 + Math.sin(tick * 0.04 + idx) * 0.015;
     ctx.save();
-    const beamGrad = ctx.createLinearGradient(tx, 12, el.canvas.width / 2, 260);
+    const beamGrad = ctx.createLinearGradient(tx, 12, el.canvas.width / 2, 270);
     beamGrad.addColorStop(0, `rgba(224, 242, 254, ${pulse * 2.2})`);
     beamGrad.addColorStop(1, "rgba(224, 242, 254, 0)");
     ctx.fillStyle = beamGrad;
     ctx.beginPath();
     ctx.moveTo(tx - 8, 12);
     ctx.lineTo(tx + 8, 12);
-    ctx.lineTo(idx === 0 ? 410 : 550, 255);
-    ctx.lineTo(idx === 0 ? 150 : 810, 255);
+    ctx.lineTo(idx === 0 ? 410 : 550, 265);
+    ctx.lineTo(idx === 0 ? 130 : 830, 265);
     ctx.closePath();
     ctx.fill();
 
@@ -1049,7 +1339,7 @@ function drawUCLStandsBillboardAndAds(tick, crowdMood) {
 }
 
 function drawRearShooter(shooterState, tick) {
-  const { x, y, stepCycle, kickSwing, reactionMood } = shooterState;
+  const { x, y, stepCycle, kickSwing, leanAngle, reactionMood } = shooterState;
 
   let moodBounceY = 0;
   let headDrop = 0;
@@ -1065,9 +1355,15 @@ function drawRearShooter(shooterState, tick) {
 
   const py = y + moodBounceY;
 
+  ctx.save();
+  ctx.translate(x, py);
+  if (leanAngle) {
+    ctx.rotate(leanAngle);
+  }
+
   ctx.fillStyle = "rgba(0, 0, 0, 0.36)";
   ctx.beginPath();
-  ctx.ellipse(x, y + 19, 24, 6.8, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 19, 25, 6.4, 0, 0, Math.PI * 2);
   ctx.fill();
 
   const stride = Math.sin(stepCycle) * 7.5;
@@ -1077,14 +1373,14 @@ function drawRearShooter(shooterState, tick) {
   ctx.lineWidth = 6.2;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(x - 6, py + 4);
-  ctx.lineTo(x - 7.5 - stride * 0.45, py + 17.5 - Math.max(0, stride * 0.45));
+  ctx.moveTo(-6, 4);
+  ctx.lineTo(-7.5 - stride * 0.45, 17.5 - Math.max(0, stride * 0.45));
   ctx.stroke();
 
-  const rightFootX = x + 6 + stride * 0.45 + kickSwing * 8;
-  const rightFootY = py + 17.5 - Math.max(0, -stride * 0.45) - kickSwing * 13;
+  const rightFootX = 6 + stride * 0.45 + kickSwing * 9;
+  const rightFootY = 17.5 - Math.max(0, -stride * 0.45) - kickSwing * 13;
   ctx.beginPath();
-  ctx.moveTo(x + 6, py + 4);
+  ctx.moveTo(6, 4);
   ctx.lineTo(rightFootX, rightFootY);
   ctx.stroke();
 
@@ -1094,61 +1390,63 @@ function drawRearShooter(shooterState, tick) {
   ctx.fill();
 
   ctx.fillStyle = "#172554";
-  ctx.fillRect(x - 11.5, py - 4, 23, 10.5);
+  ctx.fillRect(-11.5, -4, 23, 10.5);
 
   const stripeColors = ["#881337", "#1e3a8a", "#881337", "#1e3a8a", "#881337"];
   const stripeW = 27 / stripeColors.length;
   stripeColors.forEach((col, idx) => {
     ctx.fillStyle = col;
-    ctx.fillRect(x - 13.5 + idx * stripeW, py - 24.5 + torsoTilt, stripeW + 0.4, 21.5);
+    ctx.fillRect(-13.5 + idx * stripeW, -24.5 + torsoTilt, stripeW + 0.4, 21.5);
   });
 
   ctx.strokeStyle = "#facc15";
   ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.moveTo(x - 6, py - 24.5 + torsoTilt);
-  ctx.lineTo(x, py - 21 + torsoTilt);
-  ctx.lineTo(x + 6, py - 24.5 + torsoTilt);
+  ctx.moveTo(-6, -24.5 + torsoTilt);
+  ctx.lineTo(0, -21 + torsoTilt);
+  ctx.lineTo(6, -24.5 + torsoTilt);
   ctx.stroke();
 
   ctx.fillStyle = "#facc15";
   ctx.font = "bold 5.5px Arial";
   ctx.textAlign = "center";
-  ctx.fillText("MESSI", x, py - 17.5 + torsoTilt);
+  ctx.fillText("MESSI", 0, -17.5 + torsoTilt);
 
   ctx.font = "bold 8.5px Arial";
-  ctx.fillText("10", x, py - 7.5 + torsoTilt);
+  ctx.fillText("10", 0, -7.5 + torsoTilt);
 
   ctx.strokeStyle = "#fed7aa";
   ctx.lineWidth = 4.6;
   ctx.beginPath();
   if (reactionMood === "cheer") {
-    ctx.moveTo(x - 13.5, py - 20.5 + torsoTilt);
-    ctx.lineTo(x - 23, py - 34 + armWave);
-    ctx.moveTo(x + 13.5, py - 20.5 + torsoTilt);
-    ctx.lineTo(x + 23, py - 34 - armWave);
+    ctx.moveTo(-13.5, -20.5 + torsoTilt);
+    ctx.lineTo(-23, -34 + armWave);
+    ctx.moveTo(13.5, -20.5 + torsoTilt);
+    ctx.lineTo(23, -34 - armWave);
   } else if (reactionMood === "sad") {
-    ctx.moveTo(x - 13.5, py - 20.5 + torsoTilt);
-    ctx.lineTo(x - 17.5, py - 3.5);
-    ctx.moveTo(x + 13.5, py - 20.5 + torsoTilt);
-    ctx.lineTo(x + 17.5, py - 3.5);
+    ctx.moveTo(-13.5, -20.5 + torsoTilt);
+    ctx.lineTo(-17.5, -3.5);
+    ctx.moveTo(13.5, -20.5 + torsoTilt);
+    ctx.lineTo(17.5, -3.5);
   } else {
-    ctx.moveTo(x - 13.5, py - 20.5 + torsoTilt);
-    ctx.lineTo(x - 20, py - 8 + stride * 0.55 - kickSwing * 3.5);
-    ctx.moveTo(x + 13.5, py - 20.5 + torsoTilt);
-    ctx.lineTo(x + 20, py - 8 - stride * 0.55 + kickSwing * 3.5);
+    ctx.moveTo(-13.5, -20.5 + torsoTilt);
+    ctx.lineTo(-20, -8 + stride * 0.55 - kickSwing * 3.5);
+    ctx.moveTo(13.5, -20.5 + torsoTilt);
+    ctx.lineTo(20, -8 - stride * 0.55 + kickSwing * 3.5);
   }
   ctx.stroke();
 
   ctx.fillStyle = "#fed7aa";
   ctx.beginPath();
-  ctx.arc(x, py - 32.5 + torsoTilt + headDrop, 8.6, 0, Math.PI * 2);
+  ctx.arc(0, -32.5 + torsoTilt + headDrop, 8.6, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = "#1e293b";
   ctx.beginPath();
-  ctx.arc(x, py - 34 + torsoTilt + headDrop, 8.6, Math.PI * 0.85, Math.PI * 2.15);
+  ctx.arc(0, -34 + torsoTilt + headDrop, 8.6, Math.PI * 0.85, Math.PI * 2.15);
   ctx.fill();
+
+  ctx.restore();
 }
 
 function drawGoalkeeper(keeperState, tick) {
@@ -1216,26 +1514,29 @@ function drawArenaFrame(tick, shooterState, keeperState, ballState, crowdMood, b
 
   drawUCLStandsBillboardAndAds(tick, crowdMood);
 
-  const stripeCount = 6;
+  // Flattened horizontal pitch bands for a wider lateral broadcast perspective
+  const stripeCount = 7;
   const stripeH = 260 / stripeCount;
   for (let s = 0; s < stripeCount; s++) {
     ctx.fillStyle = s % 2 === 0 ? "#15803d" : "#166534";
     ctx.fillRect(0, 130 + s * stripeH, el.canvas.width, stripeH + 1);
   }
 
-  ctx.strokeStyle = "rgba(255,255,255,0.52)";
+  // Wider horizontal penalty box lines
+  ctx.strokeStyle = "rgba(255,255,255,0.55)";
   ctx.lineWidth = 2;
-  ctx.strokeRect(210, 158, 540, 215);
+  ctx.strokeRect(145, 152, 670, 224);
 
-  ctx.fillStyle = "rgba(255,255,255,0.75)";
+  // Center & penalty spot reference
+  ctx.fillStyle = "rgba(255,255,255,0.78)";
   ctx.beginPath();
-  ctx.arc(480, 326, 3.2, 0, Math.PI * 2);
+  ctx.arc(480, 334, 3.2, 0, Math.PI * 2);
   ctx.fill();
 
-  const goalLeft = 345;
-  const goalRight = 615;
+  const goalLeft = 335;
+  const goalRight = 625;
   const goalTop = 128;
-  const goalBottom = 216;
+  const goalBottom = 214;
 
   ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
   ctx.fillRect(goalLeft, goalTop, goalRight - goalLeft, goalBottom - goalTop);
@@ -1267,7 +1568,7 @@ function drawArenaFrame(tick, shooterState, keeperState, ballState, crowdMood, b
   if (trail && trail.length > 1) {
     for (let i = 0; i < trail.length - 1; i++) {
       const pt = trail[i];
-      const alpha = ((i + 1) / trail.length) * 0.28;
+      const alpha = ((i + 1) / trail.length) * 0.3;
       ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
       ctx.beginPath();
       ctx.arc(pt.x, pt.y, Math.max(3, ballRadius * 0.72), 0, Math.PI * 2);
@@ -1275,10 +1576,10 @@ function drawArenaFrame(tick, shooterState, keeperState, ballState, crowdMood, b
     }
   }
 
-  const shadowY = Math.min(350, Math.max(205, ballY + ballRadius + 6));
+  const shadowY = Math.min(358, Math.max(206, ballY + ballRadius + 6));
   ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
   ctx.beginPath();
-  ctx.ellipse(ballX, shadowY, ballRadius * 0.9, ballRadius * 0.32, 0, 0, Math.PI * 2);
+  ctx.ellipse(ballX, shadowY, ballRadius * 0.95, ballRadius * 0.28, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = "#ffffff";
@@ -1301,16 +1602,16 @@ function animatePenaltyShot(isGoal, chance, onShotSettled) {
   if (animFrameId) cancelAnimationFrame(animFrameId);
 
   const ballStartX = 480;
-  const ballStartY = 326;
+  const ballStartY = 334;
   const wideLeft = Math.random() < 0.5;
   const targetX = isGoal
-    ? (wideLeft ? 395 : 565)
-    : (chance === 0 ? (wideLeft ? 275 : 685) : 480);
+    ? (wideLeft ? 385 : 575)
+    : (chance === 0 ? (wideLeft ? 265 : 695) : 480);
   const targetY = isGoal
-    ? 166
-    : (chance === 0 ? 112 : 182);
-  const keeperDiveX = isGoal ? (targetX < 480 ? 550 : 410) : 480;
-  const keeperDiveTilt = isGoal ? (keeperDiveX > 480 ? 0.36 : -0.36) : 0;
+    ? 164
+    : (chance === 0 ? 110 : 180);
+  const keeperDiveX = isGoal ? (targetX < 480 ? 555 : 405) : 480;
+  const keeperDiveTilt = isGoal ? (keeperDiveX > 480 ? 0.38 : -0.38) : 0;
 
   const setupFrames = 40;
   const runUpFrames = 46;
@@ -1325,10 +1626,11 @@ function animatePenaltyShot(isGoal, chance, onShotSettled) {
   function step() {
     frame += 1;
 
-    let shooterX = 466;
-    let shooterY = 366;
+    let shooterX = 448;
+    let shooterY = 368;
     let stepCycle = 0;
     let kickSwing = 0;
+    let leanAngle = -0.06;
     let shooterReactionMood = "neutral";
 
     let ballX = ballStartX;
@@ -1337,7 +1639,7 @@ function animatePenaltyShot(isGoal, chance, onShotSettled) {
     let netRipple = 0;
 
     let keeperX = 480;
-    let keeperY = 190 + Math.abs(Math.sin(frame * 0.13)) * 2.5;
+    let keeperY = 188 + Math.abs(Math.sin(frame * 0.13)) * 2.2;
     let keeperTilt = 0;
     let keeperReactionMood = "neutral";
 
@@ -1345,25 +1647,28 @@ function animatePenaltyShot(isGoal, chance, onShotSettled) {
     let bannerText = "";
 
     if (frame <= setupFrames) {
-      keeperX = 480 + Math.sin(frame * 0.11) * 10;
+      keeperX = 480 + Math.sin(frame * 0.11) * 12;
     } else if (frame <= setupFrames + runUpFrames) {
       const rT = (frame - setupFrames) / runUpFrames;
       const rEase = rT * rT * (3 - 2 * rT);
-      shooterX = 466 + (478 - 466) * rEase;
-      shooterY = 366 + (348 - 366) * rEase;
+      shooterX = 448 + (476 - 448) * rEase;
+      shooterY = 368 + (354 - 368) * rEase;
       stepCycle = rT * Math.PI * 6;
-      keeperX = 480 + Math.sin(frame * 0.11) * 8;
+      leanAngle = -0.06 + rEase * 0.08;
+      keeperX = 480 + Math.sin(frame * 0.11) * 9;
     } else if (frame <= settleFrame) {
       const fT = (frame - setupFrames - runUpFrames) / flightFrames;
       const fEase = 1 - Math.pow(1 - fT, 1.85);
 
-      shooterX = 478;
-      shooterY = 348;
+      shooterX = 476;
+      shooterY = 354;
       kickSwing = Math.sin(Math.min(fT * 1.45, 1) * Math.PI);
+      leanAngle = 0.05 * kickSwing;
 
-      const curveOffset = Math.sin(fT * Math.PI) * (targetX >= 480 ? 10 : -10);
+      // Broader horizontal curl in flight
+      const curveOffset = Math.sin(fT * Math.PI) * (targetX >= 480 ? 16 : -16);
       ballX = ballStartX + (targetX - ballStartX) * fEase + curveOffset;
-      ballY = ballStartY + (targetY - ballStartY) * fEase - Math.sin(fT * Math.PI) * 34;
+      ballY = ballStartY + (targetY - ballStartY) * fEase - Math.sin(fT * Math.PI) * 30;
       ballRadius = 12 - fEase * 3.8;
 
       ballTrail.push({ x: ballX, y: ballY });
@@ -1371,16 +1676,17 @@ function animatePenaltyShot(isGoal, chance, onShotSettled) {
 
       const diveEase = Math.min(fT * 0.95, 1);
       keeperX = 480 + (keeperDiveX - 480) * diveEase;
-      keeperY = 190 - Math.sin(diveEase * Math.PI) * 14 + diveEase * 4;
+      keeperY = 188 - Math.sin(diveEase * Math.PI) * 13 + diveEase * 4;
       keeperTilt = keeperDiveTilt * diveEase;
     } else {
-      shooterX = 478;
-      shooterY = 348;
+      shooterX = 476;
+      shooterY = 354;
+      leanAngle = 0;
       ballX = targetX;
       ballY = targetY;
       ballRadius = 8.2;
       keeperX = isGoal ? keeperDiveX : 480;
-      keeperY = 194;
+      keeperY = 192;
       keeperTilt = isGoal ? keeperDiveTilt : 0;
 
       if (ballTrail.length > 0) {
@@ -1414,7 +1720,7 @@ function animatePenaltyShot(isGoal, chance, onShotSettled) {
 
     drawArenaFrame(
       frame,
-      { x: shooterX, y: shooterY, stepCycle, kickSwing, reactionMood: shooterReactionMood },
+      { x: shooterX, y: shooterY, stepCycle, kickSwing, leanAngle, reactionMood: shooterReactionMood },
       { x: keeperX, y: keeperY, tilt: keeperTilt, reactionMood: keeperReactionMood },
       { x: ballX, y: ballY, radius: ballRadius, trail: ballTrail, netRipple },
       crowdMood,
@@ -1462,9 +1768,11 @@ function showStartScreen() {
   el.guessScreen.classList.add("hidden");
   el.penaltyScreen.classList.add("hidden");
   applyLanguageUI();
+  soundEngine.startWelcomeTheme();
 }
 
 function showGuessScreen() {
+  soundEngine.stopWelcomeTheme();
   if (animFrameId) {
     cancelAnimationFrame(animFrameId);
     animFrameId = null;
@@ -1477,6 +1785,7 @@ function showGuessScreen() {
 }
 
 function showGlobeTransition(messageText) {
+  soundEngine.stopWelcomeTheme();
   soundEngine.stopSelectionTheme();
   el.startScreen.classList.add("hidden");
   el.guessScreen.classList.add("hidden");
@@ -1506,22 +1815,26 @@ async function loadRound() {
   el.shootBtn.disabled = true;
 
   el.imageLoader.classList.remove("hidden");
-  el.locationImage.onerror = () => {
-    el.locationImage.onerror = null;
-    el.locationImage.src = FALLBACK_PHOTO_URL;
-    el.imageLoader.classList.add("hidden");
-  };
+  const candidates = getCandidateUrls(q);
+  let fallbackIndex = 0;
+
   el.locationImage.onload = () => {
     el.imageLoader.classList.add("hidden");
   };
 
+  el.locationImage.onerror = () => {
+    fallbackIndex += 1;
+    if (fallbackIndex < candidates.length) {
+      el.locationImage.src = candidates[fallbackIndex];
+    } else {
+      el.locationImage.onerror = null;
+      el.locationImage.src = FALLBACK_PHOTO_URL;
+      el.imageLoader.classList.add("hidden");
+    }
+  };
+
   const cachedSrc = resolvedImageCache.get(q.wikiTitle);
-  if (cachedSrc) {
-    el.locationImage.src = cachedSrc;
-  } else {
-    const imgUrl = await fetchLandmarkImageUrl(q.wikiTitle);
-    el.locationImage.src = await loadSingleImageWithTimeout(imgUrl, 4500);
-  }
+  el.locationImage.src = cachedSrc || candidates[0];
 
   game.startTimer(
     (sec) => {
@@ -1647,6 +1960,7 @@ function renderConfetti() {
 }
 
 function openSummaryModal() {
+  soundEngine.stopWelcomeTheme();
   soundEngine.stopSelectionTheme();
   if (animFrameId) {
     cancelAnimationFrame(animFrameId);
@@ -1731,6 +2045,17 @@ function syncSettingsFromInputs() {
   game.updateSettings(clampedRounds, clampedDuration);
 }
 
+// Unlock AudioContext on first user interaction so welcome theme plays smoothly
+document.addEventListener(
+  "pointerdown",
+  () => {
+    if (!el.startScreen.classList.contains("hidden") && soundEngine.isSoundEnabled()) {
+      soundEngine.startWelcomeTheme();
+    }
+  },
+  { once: true }
+);
+
 // Return to start screen when clicking the spinning Earth or GeoGoal title
 el.homeBrandBtn.addEventListener("click", () => {
   showStartScreen();
@@ -1739,6 +2064,18 @@ el.homeBrandBtn.addEventListener("click", () => {
 // Start screen controls
 el.settingsToggleBtn.addEventListener("click", () => {
   el.settingsPanel.classList.toggle("hidden");
+  if (soundEngine.isSoundEnabled() && !el.startScreen.classList.contains("hidden")) {
+    soundEngine.startWelcomeTheme();
+  }
+});
+
+el.soundToggleBtn.addEventListener("click", () => {
+  const nextState = !soundEngine.isSoundEnabled();
+  soundEngine.setSoundEnabled(nextState);
+  el.soundToggleBtn.textContent = nextState ? t("soundOn") : t("soundOff");
+  if (nextState && !el.startScreen.classList.contains("hidden")) {
+    soundEngine.startWelcomeTheme();
+  }
 });
 
 el.roundsInput.addEventListener("change", syncSettingsFromInputs);
@@ -1763,6 +2100,7 @@ el.hudLangBtn.addEventListener("click", () => {
 });
 
 el.playBtn.addEventListener("click", async () => {
+  soundEngine.stopWelcomeTheme();
   const clampedRounds = clampInt(el.roundsInput.value, 6, 9, DEFAULT_ROUNDS);
   const clampedDuration = clampInt(el.durationInput.value, 10, 30, DEFAULT_DURATION);
   el.roundsInput.value = String(clampedRounds);
