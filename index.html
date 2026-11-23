@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GeoGoal — Champions League Penalty GeoGame</title>
+  <title>GeoGoal — Champions League Penalty & Final Match GeoGame</title>
 
   <!-- Leaflet CSS -->
   <link
@@ -54,14 +54,13 @@
   </header>
 
   <main class="game-container">
-    <!-- START SCREEN: GeoGoal with mini earth for 'o' in Goal, Duel Question, Play, Settings & EN/TR -->
+    <!-- START SCREEN: Only Play, Settings & Language -->
     <section id="start-screen" class="screen active">
       <div class="start-card">
         <div class="geogoal-logo" aria-label="GeoGoal">
           <span>Geo</span>
           <span class="goal-word">G<span class="mini-earth-o">🌍</span>al</span>
         </div>
-        <p id="duel-question-message" class="duel-question-message">Can you win this duel?</p>
 
         <div class="start-actions">
           <button id="play-btn" class="btn-primary start-play-btn">Play</button>
@@ -70,13 +69,23 @@
 
         <div id="settings-panel" class="settings-panel hidden">
           <div class="setting-row">
-            <label id="lbl-rounds-setting" for="rounds-input">Rounds (6 - 9):</label>
+            <label id="lbl-rounds-setting" for="rounds-input">Penalty Rounds (6 - 9):</label>
             <input id="rounds-input" type="number" min="6" max="9" value="6" />
           </div>
           <div class="setting-row">
-            <label id="lbl-duration-setting" for="duration-input">Round Time (10 - 30s):</label>
+            <label id="lbl-duration-setting" for="duration-input">Penalty Time (10 - 30s):</label>
             <input id="duration-input" type="number" min="10" max="30" value="15" />
           </div>
+          <div class="settings-divider"></div>
+          <div class="setting-row">
+            <label id="lbl-final-rounds-setting" for="final-rounds-input">Final Match Images (6 - 9):</label>
+            <input id="final-rounds-input" type="number" min="6" max="9" value="6" />
+          </div>
+          <div class="setting-row">
+            <label id="lbl-final-duration-setting" for="final-duration-input">Final Match Time (10 - 20s):</label>
+            <input id="final-duration-input" type="number" min="10" max="20" value="15" />
+          </div>
+          <div class="settings-divider"></div>
           <div class="setting-row">
             <span id="lbl-sound-setting">Sound:</span>
             <button id="sound-toggle-btn" class="btn-secondary" type="button" style="padding: 5px 12px; font-size: 12px;">
@@ -91,6 +100,62 @@
             <button id="lang-en-btn" class="lang-choice-btn active" type="button">English</button>
             <button id="lang-tr-btn" class="lang-choice-btn" type="button">Turkish</button>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODE SELECT SCREEN: Penalty Mode vs Final Match -->
+    <section id="mode-screen" class="screen hidden">
+      <div class="character-card-container">
+        <h2 id="mode-select-title">Select Game Mode</h2>
+        <div class="mode-grid">
+          <button type="button" id="choose-penalty-mode-btn" class="mode-choice-card">
+            <span class="mode-icon">⚽</span>
+            <h3 id="penalty-mode-heading">Penalty Mode</h3>
+            <p id="penalty-mode-desc">Choose Messi, Ronaldo, or Arda Güler and shoot penalties.</p>
+          </button>
+
+          <button type="button" id="choose-final-mode-btn" class="mode-choice-card">
+            <span class="mode-icon">🏆</span>
+            <h3 id="final-mode-heading">Final Match</h3>
+            <p id="final-mode-desc">5v5 + Goalkeepers full match showdown with marathon stands.</p>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHARACTER SELECT SCREEN (Penalty Mode) -->
+    <section id="character-screen" class="screen hidden">
+      <div class="character-card-container">
+        <h2 id="char-select-title">Choose Your Penalty Taker</h2>
+        <p id="char-select-subtitle" class="char-select-subtitle">
+          Pick the star who will step up to the spot for your team.
+        </p>
+
+        <div class="character-grid">
+          <button type="button" class="player-card selected" data-player="messi">
+            <div class="jersey-badge jersey-messi">10</div>
+            <h3>Lionel Messi</h3>
+            <span id="desc-messi" class="player-meta">Left-footed finesse • #10</span>
+          </button>
+
+          <button type="button" class="player-card" data-player="ronaldo">
+            <div class="jersey-badge jersey-ronaldo">7</div>
+            <h3>Cristiano Ronaldo</h3>
+            <span id="desc-ronaldo" class="player-meta">Power knuckleball • #7</span>
+          </button>
+
+          <button type="button" class="player-card" data-player="arda">
+            <div class="jersey-badge jersey-arda">15</div>
+            <h3>Arda Güler</h3>
+            <span id="desc-arda" class="player-meta">Silky left-foot curl • #15</span>
+          </button>
+        </div>
+
+        <div class="action-row">
+          <button id="confirm-character-btn" class="btn-primary start-play-btn">
+            Confirm & Start →
+          </button>
         </div>
       </div>
     </section>
@@ -123,16 +188,16 @@
 
       <div class="action-row">
         <button id="shoot-btn" class="btn-primary" disabled>
-          Confirm Guess & Go to Penalty
+          Confirm Guess & Go to Arena
         </button>
       </div>
     </section>
 
-    <!-- SCREEN 2: Dedicated Champions League Penalty Shootout Arena -->
+    <!-- SCREEN 2: Dedicated Champions League Penalty & Final Match Arena -->
     <section id="penalty-screen" class="screen hidden">
       <div id="penalty-loading" class="penalty-loader">
         <div class="spinner"></div>
-        <p>Loading Penalty Arena & Crowd...</p>
+        <p>Loading Arena & Crowd...</p>
       </div>
 
       <div id="penalty-stage" class="panel arena-panel hidden">
@@ -157,7 +222,7 @@
         </div>
 
         <div class="canvas-wrapper">
-          <canvas id="penalty-canvas" width="960" height="390"></canvas>
+          <canvas id="penalty-canvas" width="960" height="410"></canvas>
         </div>
 
         <div class="post-shot-grid">
@@ -197,7 +262,9 @@
         <canvas id="results-chart"></canvas>
       </div>
 
-      <button id="restart-btn" class="btn-primary">Play Again</button>
+      <div class="modal-actions">
+        <button id="restart-btn" class="btn-primary">Play Again</button>
+      </div>
     </div>
   </div>
 

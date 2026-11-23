@@ -115,7 +115,7 @@ body {
 
 /* Start Screen */
 .start-card {
-  max-width: 540px;
+  max-width: 520px;
   margin: 48px auto;
   padding: 36px 24px;
   background: linear-gradient(160deg, #071330 0%, #13295b 100%);
@@ -150,20 +150,13 @@ body {
   animation: globeSpin 2.6s linear infinite;
 }
 
-.duel-question-message {
-  margin-top: 10px;
-  font-size: 16px;
-  font-weight: bold;
-  color: #38bdf8;
-}
-
 @keyframes globeSpin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
 .start-actions {
-  margin-top: 24px;
+  margin-top: 26px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -171,26 +164,32 @@ body {
 }
 
 .start-play-btn {
-  width: 220px;
+  width: 240px;
   padding: 13px 24px;
   font-size: 17px;
 }
 
 #settings-toggle-btn {
-  width: 220px;
+  width: 240px;
 }
 
 .settings-panel {
   margin: 16px auto 0;
-  max-width: 340px;
+  max-width: 380px;
   background-color: #0f172a;
   border: 1px solid #334155;
   border-radius: 10px;
   padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 11px;
   text-align: left;
+}
+
+.settings-divider {
+  height: 1px;
+  background-color: #1e293b;
+  margin: 2px 0;
 }
 
 .setting-row {
@@ -241,6 +240,138 @@ body {
   background-color: #38bdf8;
   color: #082f49;
   border-color: #38bdf8;
+}
+
+/* Mode & Character Selection Screens */
+.character-card-container {
+  max-width: 820px;
+  margin: 34px auto;
+  padding: 32px 24px;
+  background: linear-gradient(160deg, #071330 0%, #13295b 100%);
+  border: 1px solid #2563eb;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.65);
+}
+
+.character-card-container h2 {
+  font-size: 28px;
+  color: #f8fafc;
+}
+
+.char-select-subtitle {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #93c5fd;
+}
+
+.mode-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.mode-choice-card {
+  background-color: #0f172a;
+  border: 2px solid #334155;
+  border-radius: 14px;
+  padding: 26px 18px;
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.mode-choice-card:hover {
+  transform: translateY(-4px);
+  border-color: #22c55e;
+  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.2);
+}
+
+.mode-icon {
+  font-size: 36px;
+}
+
+.mode-choice-card h3 {
+  font-size: 20px;
+  color: #38bdf8;
+}
+
+.mode-choice-card p {
+  font-size: 13px;
+  font-weight: normal;
+  color: #cbd5e1;
+}
+
+.character-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.player-card {
+  background-color: #0f172a;
+  border: 2px solid #334155;
+  border-radius: 14px;
+  padding: 20px 14px;
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.player-card:hover {
+  transform: translateY(-4px);
+  border-color: #38bdf8;
+}
+
+.player-card.selected {
+  border-color: #22c55e;
+  background: linear-gradient(180deg, #0f172a 0%, #052e16 100%);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+}
+
+.jersey-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  border: 3px solid #facc15;
+}
+
+.jersey-messi {
+  background: repeating-linear-gradient(90deg, #881337 0 10px, #1e3a8a 10px 20px);
+  color: #facc15;
+}
+
+.jersey-ronaldo {
+  background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+  color: #0f172a;
+}
+
+.jersey-arda {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  color: #ffffff;
+}
+
+.player-card h3 {
+  font-size: 18px;
+}
+
+.player-meta {
+  font-size: 12px;
+  font-weight: normal;
+  color: #94a3b8;
 }
 
 .guess-grid {
@@ -320,7 +451,7 @@ body {
   display: flex;
   justify-content: center;
   gap: 14px;
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
 button {
@@ -352,7 +483,7 @@ button:disabled {
   color: #082f49;
 }
 
-/* Penalty Screen & Loading */
+/* Penalty & Match Screen */
 .penalty-loader {
   background-color: #1e293b;
   border: 1px solid #334155;
@@ -398,6 +529,7 @@ button:disabled {
   background-color: #0f172a;
   display: flex;
   justify-content: center;
+  overflow: hidden;
 }
 
 #penalty-canvas {
@@ -576,13 +708,22 @@ button:disabled {
   margin-bottom: 18px;
 }
 
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .leaflet-control-attribution {
   display: none !important;
 }
 
 @media (max-width: 820px) {
   .guess-grid,
-  .post-shot-grid {
+  .post-shot-grid,
+  .character-grid,
+  .mode-grid {
     grid-template-columns: 1fr;
   }
 }
