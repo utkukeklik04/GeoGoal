@@ -1441,7 +1441,7 @@ function getBasePoints(chance) {
 }
 
 // ============================================================================
-// CANVAS RENDERING & DYNAMIC 6v6 MATCH ENGINE (50/50 CURVED/GROUND + MOVING RUNNERS)
+// CANVAS RENDERING & REALISTIC 6v6 MATCH ENGINE (DRIBBLE CONTROL + FORWARD RUNS)
 // ============================================================================
 const ctx = el.canvas.getContext("2d");
 let animFrameId = null;
@@ -2008,15 +2008,12 @@ function drawMatchPitchAndGoals(netRippleBlue, netRippleRed, timeSec) {
   ctx.strokeRect(rGoalX, rGoalY, goalW, goalH);
 }
 
-// 50% crisp ground passes (curve: 0, loft: 0) & 50% curved lofted passes (curve != 0, loft > 0)
-// Players constantly dribble & advance into open space — zero standing still
 function buildMatchScript(blueScores, chance, variant) {
   const isSuspense = chance === 80 || chance === 50 || chance === 20;
   const v = ((variant % 6) + 6) % 6;
 
   if (!isSuspense && blueScores) {
     if (v === 0) {
-      // Dribble -> Lofted curved switch -> Dribble -> Ground pass -> Shot
       return [
         { type: "dribble", team: "blue", idx: 0, start: 0.0, end: 1.15, tx: 335, ty: 196 },
         { type: "pass", team: "blue", fromIdx: 0, toIdx: 2, start: 1.15, end: 2.35, rx: 505, ry: 204, curve: -22, loft: 11 },
@@ -2026,7 +2023,6 @@ function buildMatchScript(blueScores, chance, variant) {
         { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 304, diveDir: 1, shotCurve: -16 }
       ];
     } else if (v === 1) {
-      // Fast Tiki-Taka 1-touch ground & lofted combo
       return [
         { type: "dribble", team: "blue", idx: 1, start: 0.0, end: 1.0, tx: 320, ty: 338 },
         { type: "pass", team: "blue", fromIdx: 1, toIdx: 3, start: 1.0, end: 2.15, rx: 495, ry: 332, curve: 0, loft: 0 },
@@ -2036,7 +2032,6 @@ function buildMatchScript(blueScores, chance, variant) {
         { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 242, diveDir: -1, shotCurve: 16 }
       ];
     } else if (v === 2) {
-      // Dribble -> Ground pass -> Dribble -> Lofted cross -> Finish
       return [
         { type: "dribble", team: "blue", idx: 2, start: 0.0, end: 1.15, tx: 455, ty: 215 },
         { type: "pass", team: "blue", fromIdx: 2, toIdx: 4, start: 1.15, end: 2.35, rx: 575, ry: 273, curve: 0, loft: 0 },
@@ -2046,7 +2041,6 @@ function buildMatchScript(blueScores, chance, variant) {
         { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 302, diveDir: 1, shotCurve: -16 }
       ];
     } else if (v === 3) {
-      // Tiki-taka triangle + wing run + curved cutback
       return [
         { type: "dribble", team: "blue", idx: 1, start: 0.0, end: 1.0, tx: 315, ty: 330 },
         { type: "pass", team: "blue", fromIdx: 1, toIdx: 4, start: 1.0, end: 2.2, rx: 540, ry: 273, curve: 20, loft: 10 },
@@ -2056,7 +2050,6 @@ function buildMatchScript(blueScores, chance, variant) {
         { type: "shot_goal", team: "blue", idx: 3, start: 5.75, end: 7.4, gx: 932, gy: 244, diveDir: -1, shotCurve: 16 }
       ];
     } else if (v === 4) {
-      // Midfield dribble -> Ground pass -> Dribble -> Ground pass -> Shot
       return [
         { type: "dribble", team: "blue", idx: 0, start: 0.0, end: 1.15, tx: 365, ty: 205 },
         { type: "pass", team: "blue", fromIdx: 0, toIdx: 4, start: 1.15, end: 2.4, rx: 590, ry: 273, curve: 0, loft: 0 },
@@ -2066,7 +2059,6 @@ function buildMatchScript(blueScores, chance, variant) {
         { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 302, diveDir: 1, shotCurve: -16 }
       ];
     } else {
-      // Long curved diagonal -> Wing dribble -> Ground pass -> Volley
       return [
         { type: "dribble", team: "blue", idx: 2, start: 0.0, end: 1.15, tx: 485, ty: 194 },
         { type: "pass", team: "blue", fromIdx: 2, toIdx: 1, start: 1.15, end: 2.65, rx: 665, ry: 344, curve: 26, loft: 12 },
@@ -2293,15 +2285,15 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
 
   const initialDir = script[0].team === "blue" ? 1 : -1;
   const initialCarrier = getTeamArray(script[0].team)[script[0].idx];
-  let ballX = initialCarrier.x + initialDir * 12;
-  let ballY = initialCarrier.y + 3;
+  let ballX = initialCarrier.x + initialDir * 10;
+  let ballY = initialCarrier.y + 4;
   let ballZ = 0;
   let activeSegIndex = -1;
   let segStartBall = { x: ballX, y: ballY };
   const ballTrail = [];
 
-  function enforcePlayerAndBallClearance(allOutfield, bX, bY, exemptPlayer) {
-    const minPlayerDist = 32;
+  function enforcePlayerAndBallClearance(allOutfield, bX, bY, exemptPlayers) {
+    const minPlayerDist = 30;
     for (let i = 0; i < allOutfield.length; i++) {
       for (let j = i + 1; j < allOutfield.length; j++) {
         const a = allOutfield[i];
@@ -2313,17 +2305,21 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
           const push = (minPlayerDist - dist) * 0.5;
           const nx = dx / dist;
           const ny = dy / dist;
-          a.x -= nx * push;
-          a.y -= ny * push;
-          b.x += nx * push;
-          b.y += ny * push;
+          if (!exemptPlayers.has(a)) {
+            a.x -= nx * push;
+            a.y -= ny * push;
+          }
+          if (!exemptPlayers.has(b)) {
+            b.x += nx * push;
+            b.y += ny * push;
+          }
         }
       }
     }
 
-    const ballClearance = 34;
+    const ballClearance = 30;
     allOutfield.forEach((p) => {
-      if (p === exemptPlayer) return;
+      if (exemptPlayers.has(p)) return;
       const dx = p.x - bX;
       const dy = p.y - bY;
       const dist = Math.hypot(dx, dy);
@@ -2387,12 +2383,20 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
 
     if (!goalReached) {
       const desiredTargets = new Map();
+      const exemptPlayers = new Set();
 
-      let activeBallHandler = null;
-      if (seg.type === "dribble") activeBallHandler = getTeamArray(seg.team)[seg.idx];
-      else if (seg.type === "steal") activeBallHandler = getTeamArray(seg.toTeam)[seg.toIdx];
-      else if (seg.type === "pass" || seg.type === "gk_pass") activeBallHandler = getTeamArray(seg.team)[seg.toIdx];
-      else if (seg.type === "shot_save" || seg.type === "shot_goal") activeBallHandler = getTeamArray(seg.team)[seg.idx];
+      if (seg.type === "dribble") {
+        exemptPlayers.add(getTeamArray(seg.team)[seg.idx]);
+      } else if (seg.type === "steal") {
+        exemptPlayers.add(getTeamArray(seg.toTeam)[seg.toIdx]);
+      } else if (seg.type === "pass") {
+        exemptPlayers.add(getTeamArray(seg.team)[seg.fromIdx]);
+        exemptPlayers.add(getTeamArray(seg.team)[seg.toIdx]);
+      } else if (seg.type === "gk_pass") {
+        exemptPlayers.add(getTeamArray(seg.team)[seg.toIdx]);
+      } else if (seg.type === "shot_save" || seg.type === "shot_goal") {
+        exemptPlayers.add(getTeamArray(seg.team)[seg.idx]);
+      }
 
       const defendingTeam = attackingTeam === "blue" ? redPlayers : bluePlayers;
       const rankedDefenders = defendingTeam
@@ -2410,31 +2414,29 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
         let tx = p.homeX;
         let ty = p.homeY;
 
-        // Continuous forward & lateral attacking run drift so players NEVER stand frozen
-        const continuousRunX = Math.min(75, elapsedSec * 12) * dir;
-        const lateralDriftY = Math.sin(elapsedSec * 2.2 + idx * 1.4) * 14;
-
         if (isAttacker) {
           const advanceRatio = isBlue
             ? Math.max(0, Math.min(1, (ballX - 180) / 560))
             : Math.max(0, Math.min(1, (780 - ballX) / 560));
           const pushDist = idx < 2 ? 225 * advanceRatio : (idx < 4 ? 290 * advanceRatio : 315 * advanceRatio);
-          tx = p.homeX + dir * pushDist + continuousRunX;
-          ty = lerp(p.homeY, ballY + (idx % 2 === 0 ? -62 : 62), 0.34) + lateralDriftY;
+          const rawTx = p.homeX + dir * (pushDist + Math.min(60, elapsedSec * 10));
+
+          tx = isBlue ? Math.max(p.x, rawTx) : Math.min(p.x, rawTx);
+          ty = lerp(p.homeY, ballY + (idx % 2 === 0 ? -58 : 58), 0.34);
         } else {
           const ownGoalX = isBlue ? 64 : 896;
           const ballToGoalX = lerp(ownGoalX, ballX, 0.44);
           const laneOffset = (idx === 0 || idx === 2) ? -48 : (idx === 1 || idx === 3 ? 48 : 0);
 
           tx = lerp(p.homeX, ballToGoalX, 0.65);
-          ty = lerp(p.homeY, ballY + laneOffset, 0.6) + lateralDriftY * 0.6;
+          ty = lerp(p.homeY, ballY + laneOffset, 0.6);
 
           if (p === primaryPresser && seg.type !== "steal") {
             const toGoalDx = ownGoalX - ballX;
             const toGoalDy = 273 - ballY;
             const toGoalLen = Math.hypot(toGoalDx, toGoalDy) || 1;
-            tx = ballX + (toGoalDx / toGoalLen) * 46;
-            ty = ballY + (toGoalDy / toGoalLen) * 46;
+            tx = ballX + (toGoalDx / toGoalLen) * 44;
+            ty = ballY + (toGoalDy / toGoalLen) * 44;
           } else if (p === secondaryCover) {
             tx = lerp(ballX, ownGoalX, 0.34);
             ty = lerp(ballY, 273, 0.52);
@@ -2451,18 +2453,16 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
         const interceptor = getTeamArray(seg.toTeam)[seg.toIdx];
         desiredTargets.set(interceptor, { x: seg.tx, y: seg.ty });
       } else if (seg.type === "pass" || seg.type === "gk_pass") {
-        // Receiver runs dynamically into the receiving space instead of waiting frozen
         const receiver = getTeamArray(seg.team)[seg.toIdx];
-        const dir = seg.team === "blue" ? 1 : -1;
-        const leadX = seg.rx - dir * (1 - segT) * 26;
-        desiredTargets.set(receiver, { x: leadX, y: seg.ry });
+        const isBlue = seg.team === "blue";
+        const targetX = isBlue ? Math.max(receiver.x, seg.rx) : Math.min(receiver.x, seg.rx);
+        desiredTargets.set(receiver, { x: targetX, y: seg.ry });
       } else if (seg.type === "shot_save" || seg.type === "shot_goal") {
-        // Shooter follows through smoothly after striking the ball
         const shooter = getTeamArray(seg.team)[seg.idx];
         const dir = seg.team === "blue" ? 1 : -1;
         desiredTargets.set(shooter, {
-          x: shooter.x + dir * Math.min(28, segT * 36),
-          y: shooter.y + (seg.diveDir || 1) * Math.min(10, segT * 14)
+          x: shooter.x + dir * Math.min(24, segT * 30),
+          y: shooter.y
         });
       }
 
@@ -2470,9 +2470,11 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
         const nextSeg = script[segIdx + 1];
         if (nextSeg.type === "pass" && nextSeg.team === attackingTeam) {
           const nextRec = getTeamArray(nextSeg.team)[nextSeg.toIdx];
+          const isBlue = nextSeg.team === "blue";
+          const leadX = lerp(nextRec.x, nextSeg.rx, 0.72);
           desiredTargets.set(nextRec, {
-            x: lerp(nextRec.x, nextSeg.rx, 0.78),
-            y: lerp(nextRec.y, nextSeg.ry, 0.78)
+            x: isBlue ? Math.max(nextRec.x, leadX) : Math.min(nextRec.x, leadX),
+            y: lerp(nextRec.y, nextSeg.ry, 0.72)
           });
         }
       }
@@ -2482,38 +2484,39 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
         const dx = tgt.x - p.x;
         const dy = tgt.y - p.y;
         const dist = Math.hypot(dx, dy);
-        const maxSpeed = 245;
-        const desiredSpeed = Math.min(maxSpeed, dist * 4.2);
+        const maxSpeed = exemptPlayers.has(p) ? 285 : 235;
+        const desiredSpeed = Math.min(maxSpeed, dist * 5.0);
         const desiredVx = dist > 1 ? (dx / dist) * desiredSpeed : 0;
         const desiredVy = dist > 1 ? (dy / dist) * desiredSpeed : 0;
 
-        p.vx = smoothDamp(p.vx, desiredVx, 11.5, dt);
-        p.vy = smoothDamp(p.vy, desiredVy, 11.5, dt);
+        p.vx = smoothDamp(p.vx, desiredVx, 13, dt);
+        p.vy = smoothDamp(p.vy, desiredVy, 13, dt);
         p.x += p.vx * dt;
         p.y += p.vy * dt;
         p.speed = Math.hypot(p.vx, p.vy);
-        p.runPhase += dt * (4.4 + p.speed * 0.08);
+        p.runPhase += dt * (4.2 + p.speed * 0.08);
       });
 
       ballZ = 0;
       if (seg.type === "dribble") {
         const carrier = getTeamArray(seg.team)[seg.idx];
         const dir = seg.team === "blue" ? 1 : -1;
-        ballX = carrier.x + dir * 12;
-        ballY = carrier.y + 3;
+        const dribbleTap = Math.abs(Math.sin(carrier.runPhase * 1.05)) * 4;
+        ballX = carrier.x + dir * (9 + dribbleTap);
+        ballY = carrier.y + 4 + Math.sin(carrier.runPhase) * 1.4;
       } else if (seg.type === "steal") {
         const interceptor = getTeamArray(seg.toTeam)[seg.toIdx];
         const dir = seg.toTeam === "blue" ? 1 : -1;
-        const targetX = interceptor.x + dir * 12;
-        const targetY = interceptor.y + 3;
+        const targetX = interceptor.x + dir * 10;
+        const targetY = interceptor.y + 4;
         const ease = segT * segT * (3 - 2 * segT);
         ballX = lerp(segStartBall.x, targetX, ease);
         ballY = lerp(segStartBall.y, targetY, ease);
       } else if (seg.type === "pass") {
-        // 50% crisp flat ground passes (curve === 0), 50% curved lofted passes (curve !== 0)
+        const receiver = getTeamArray(seg.team)[seg.toIdx];
         const dir = seg.team === "blue" ? 1 : -1;
-        const destX = seg.rx + dir * 11;
-        const destY = seg.ry + 3;
+        const destX = receiver.x + dir * 10;
+        const destY = receiver.y + 4;
         const ease = 0.5 - 0.5 * Math.cos(Math.PI * segT);
         const curveVal = seg.curve ?? 0;
         const loftVal = seg.loft ?? 0;
@@ -2529,9 +2532,10 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
           ballZ = Math.sin(ease * Math.PI) * loftVal;
         }
       } else if (seg.type === "gk_pass") {
+        const receiver = getTeamArray(seg.team)[seg.toIdx];
         const dir = seg.team === "blue" ? 1 : -1;
-        const destX = seg.rx + dir * 11;
-        const destY = seg.ry + 3;
+        const destX = receiver.x + dir * 10;
+        const destY = receiver.y + 4;
         const ease = 0.5 - 0.5 * Math.cos(Math.PI * segT);
         const curveVal = seg.curve ?? 18;
         const { cx, cy } = getCurvedControlPoint(segStartBall.x, segStartBall.y, destX, destY, curveVal);
@@ -2576,7 +2580,7 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
         }
       }
 
-      enforcePlayerAndBallClearance(allOutfield, ballX, ballY, activeBallHandler);
+      enforcePlayerAndBallClearance(allOutfield, ballX, ballY, exemptPlayers);
 
       if (!(seg.type === "shot_save" && seg.team === "red") && !(seg.type === "shot_goal" && seg.team === "red")) {
         blueGk.diveProgress = smoothDamp(blueGk.diveProgress, 0, 9, dt);
