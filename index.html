@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#040b1e" />
   <title>GeoGoal — Champions League Penalty & Final Match GeoGame</title>
 
   <!-- Leaflet CSS -->
@@ -18,6 +21,17 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
+  <!-- Global Floating Sound Toggle (Visible on All Screens) -->
+  <button
+    id="floating-sound-btn"
+    class="floating-sound-btn"
+    type="button"
+    aria-label="Toggle Sound"
+    title="Sound On / Off"
+  >
+    🔊
+  </button>
+
   <header id="top-hud" class="top-bar hidden">
     <div id="home-brand-btn" class="brand home-trigger" title="Back to Home">
       <span class="hud-earth">🌍</span>
@@ -46,7 +60,7 @@
       </div>
       <div class="stat-box">
         <span id="lbl-lang-hud">Language</span>
-        <button id="hud-lang-btn" class="btn-secondary" style="padding: 4px 10px; font-size: 12px; margin-top: 2px;">
+        <button id="hud-lang-btn" class="btn-secondary hud-lang-btn">
           EN / TR
         </button>
       </div>
@@ -70,20 +84,20 @@
         <div id="settings-panel" class="settings-panel hidden">
           <div class="setting-row">
             <label id="lbl-rounds-setting" for="rounds-input">Penalty Rounds (6 - 9):</label>
-            <input id="rounds-input" type="number" min="6" max="9" value="6" />
+            <input id="rounds-input" type="number" inputmode="numeric" min="6" max="9" value="6" />
           </div>
           <div class="setting-row">
             <label id="lbl-duration-setting" for="duration-input">Penalty Time (10 - 30s):</label>
-            <input id="duration-input" type="number" min="10" max="30" value="15" />
+            <input id="duration-input" type="number" inputmode="numeric" min="10" max="30" value="15" />
           </div>
           <div class="settings-divider"></div>
           <div class="setting-row">
             <label id="lbl-final-rounds-setting" for="final-rounds-input">Final Match Images (6 - 9):</label>
-            <input id="final-rounds-input" type="number" min="6" max="9" value="6" />
+            <input id="final-rounds-input" type="number" inputmode="numeric" min="6" max="9" value="6" />
           </div>
           <div class="setting-row">
             <label id="lbl-final-duration-setting" for="final-duration-input">Final Match Time (10 - 20s):</label>
-            <input id="final-duration-input" type="number" min="10" max="20" value="15" />
+            <input id="final-duration-input" type="number" inputmode="numeric" min="10" max="20" value="15" />
           </div>
           <div class="settings-divider"></div>
           <div class="setting-row">
@@ -118,7 +132,7 @@
           <button type="button" id="choose-final-mode-btn" class="mode-choice-card">
             <span class="mode-icon">🏆</span>
             <h3 id="final-mode-heading">Final Match</h3>
-            <p id="final-mode-desc">5v5 + Goalkeepers full match showdown with marathon stands.</p>
+            <p id="final-mode-desc">Who will win the 6v6 big final?</p>
           </button>
         </div>
       </div>
@@ -237,6 +251,30 @@
       </div>
     </section>
   </main>
+
+  <!-- UEFA Champions League Style Corner Starball & Stadium Glow -->
+  <div class="ucl-corner-emblem" aria-hidden="true">
+    <svg viewBox="0 0 120 120" width="110" height="110">
+      <defs>
+        <radialGradient id="uclGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45" />
+          <stop offset="70%" stop-color="#1d4ed8" stop-opacity="0.15" />
+          <stop offset="100%" stop-color="#020617" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="60" cy="60" r="56" fill="url(#uclGlow)" />
+      <circle cx="60" cy="60" r="38" fill="none" stroke="rgba(226,232,240,0.45)" stroke-width="1.5" />
+      <g fill="#f8fafc" opacity="0.88">
+        <polygon points="60,24 63,31 70,31 64.5,35.5 66.5,42 60,38 53.5,42 55.5,35.5 50,31 57,31" />
+        <polygon points="86,38 88,44 94,44 89,48 91,54 86,50.5 81,54 83,48 78,44 84,44" />
+        <polygon points="86,70 88,76 94,76 89,80 91,86 86,82.5 81,86 83,80 78,76 84,76" />
+        <polygon points="60,82 63,89 70,89 64.5,93.5 66.5,100 60,96 53.5,100 55.5,93.5 50,89 57,89" />
+        <polygon points="34,70 36,76 42,76 37,80 39,86 34,82.5 29,86 31,80 26,76 32,76" />
+        <polygon points="34,38 36,44 42,44 37,48 39,54 34,50.5 29,54 31,48 26,44 32,44" />
+        <polygon points="60,51 63.5,58 71,58 65,62.5 67.5,70 60,65.5 52.5,70 55,62.5 49,58 56.5,58" />
+      </g>
+    </svg>
+  </div>
 
   <footer class="site-footer">
     <span>© Utku Keklik 2026</span>
