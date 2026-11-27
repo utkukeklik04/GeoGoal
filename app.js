@@ -613,7 +613,6 @@ const soundEngine = (() => {
     const audio = ensureContext();
     if (!audio) return;
 
-    // Silent buffer kick ensures iOS Safari & Android Chrome unlock audio immediately
     try {
       const buf = audio.createBuffer(1, 1, 22050);
       const src = audio.createBufferSource();
@@ -1545,7 +1544,7 @@ function getBasePoints(chance) {
 }
 
 // ============================================================================
-// CANVAS RENDERING & REALISTIC 6v6 MATCH ENGINE (DRIBBLE CONTROL + FORWARD RUNS)
+// CANVAS RENDERING & 6v6 MATCH ENGINE (STRAIGHT, LOFTED & THROUGH PASSES)
 // ============================================================================
 const ctx = el.canvas.getContext("2d");
 let animFrameId = null;
@@ -1557,11 +1556,6 @@ function lerp(a, b, tVal) {
 function smoothDamp(current, target, speed, dt) {
   const factor = 1 - Math.exp(-speed * dt);
   return current + (target - current) * factor;
-}
-
-function quadBezier(p0, p1, p2, tVal) {
-  const u = 1 - tVal;
-  return u * u * p0 + 2 * u * tVal * p1 + tVal * tVal * p2;
 }
 
 const MARATHON_CROWD = Array.from({ length: 64 }, (_, i) => {
@@ -2112,6 +2106,10 @@ function drawMatchPitchAndGoals(netRippleBlue, netRippleRed, timeSec) {
   ctx.strokeRect(rGoalX, rGoalY, goalW, goalH);
 }
 
+// Pass types:
+// - "pass" / "gk_pass": straight ground pass (no lateral curve)
+// - "loft_pass": straight high pass (loft > 0, no lateral curve)
+// - "through_pass": receiver runs ahead into space while ball is passed cleanly to target
 function buildMatchScript(blueScores, chance, variant) {
   const isSuspense = chance === 80 || chance === 50 || chance === 20;
   const v = ((variant % 6) + 6) % 6;
@@ -2119,56 +2117,56 @@ function buildMatchScript(blueScores, chance, variant) {
   if (!isSuspense && blueScores) {
     if (v === 0) {
       return [
-        { type: "dribble", team: "blue", idx: 0, start: 0.0, end: 1.15, tx: 335, ty: 196 },
-        { type: "pass", team: "blue", fromIdx: 0, toIdx: 2, start: 1.15, end: 2.35, rx: 505, ry: 204, curve: -22, loft: 11 },
-        { type: "dribble", team: "blue", idx: 2, start: 2.35, end: 3.15, tx: 575, ty: 222 },
-        { type: "pass", team: "blue", fromIdx: 2, toIdx: 3, start: 3.15, end: 4.35, rx: 660, ry: 326, curve: 0, loft: 0 },
-        { type: "pass", team: "blue", fromIdx: 3, toIdx: 4, start: 4.35, end: 5.75, rx: 788, ry: 272, curve: -18, loft: 9 },
-        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 304, diveDir: 1, shotCurve: -16 }
+        { type: "dribble", team: "blue", idx: 0, start: 0.0, end: 1.05, tx: 335, ty: 205 },
+        { type: "pass", team: "blue", fromIdx: 0, toIdx: 2, start: 1.05, end: 2.15, rx: 495, ry: 205 },
+        { type: "through_pass", team: "blue", fromIdx: 2, toIdx: 4, start: 2.15, end: 3.45, rx: 695, ry: 273 },
+        { type: "loft_pass", team: "blue", fromIdx: 4, toIdx: 3, start: 3.45, end: 4.65, rx: 745, ry: 326, loft: 15 },
+        { type: "pass", team: "blue", fromIdx: 3, toIdx: 4, start: 4.65, end: 5.75, rx: 790, ry: 278 },
+        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 304, diveDir: 1 }
       ];
     } else if (v === 1) {
       return [
-        { type: "dribble", team: "blue", idx: 1, start: 0.0, end: 1.0, tx: 320, ty: 338 },
-        { type: "pass", team: "blue", fromIdx: 1, toIdx: 3, start: 1.0, end: 2.15, rx: 495, ry: 332, curve: 0, loft: 0 },
-        { type: "pass", team: "blue", fromIdx: 3, toIdx: 4, start: 2.15, end: 3.3, rx: 615, ry: 273, curve: 0, loft: 0 },
-        { type: "pass", team: "blue", fromIdx: 4, toIdx: 2, start: 3.3, end: 4.5, rx: 705, ry: 206, curve: -24, loft: 11 },
-        { type: "pass", team: "blue", fromIdx: 2, toIdx: 4, start: 4.5, end: 5.75, rx: 792, ry: 256, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 242, diveDir: -1, shotCurve: 16 }
+        { type: "dribble", team: "blue", idx: 1, start: 0.0, end: 1.0, tx: 325, ty: 336 },
+        { type: "pass", team: "blue", fromIdx: 1, toIdx: 3, start: 1.0, end: 2.1, rx: 495, ry: 332 },
+        { type: "loft_pass", team: "blue", fromIdx: 3, toIdx: 2, start: 2.1, end: 3.35, rx: 645, ry: 210, loft: 16 },
+        { type: "through_pass", team: "blue", fromIdx: 2, toIdx: 4, start: 3.35, end: 4.65, rx: 765, ry: 265 },
+        { type: "pass", team: "blue", fromIdx: 4, toIdx: 4, start: 4.65, end: 5.75, rx: 792, ry: 260 },
+        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 242, diveDir: -1 }
       ];
     } else if (v === 2) {
       return [
-        { type: "dribble", team: "blue", idx: 2, start: 0.0, end: 1.15, tx: 455, ty: 215 },
-        { type: "pass", team: "blue", fromIdx: 2, toIdx: 4, start: 1.15, end: 2.35, rx: 575, ry: 273, curve: 0, loft: 0 },
-        { type: "dribble", team: "blue", idx: 4, start: 2.35, end: 3.25, tx: 650, ty: 282 },
-        { type: "pass", team: "blue", fromIdx: 4, toIdx: 3, start: 3.25, end: 4.5, rx: 710, ry: 336, curve: 22, loft: 10 },
-        { type: "pass", team: "blue", fromIdx: 3, toIdx: 4, start: 4.5, end: 5.75, rx: 794, ry: 282, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 302, diveDir: 1, shotCurve: -16 }
+        { type: "dribble", team: "blue", idx: 2, start: 0.0, end: 1.1, tx: 455, ty: 215 },
+        { type: "through_pass", team: "blue", fromIdx: 2, toIdx: 4, start: 1.1, end: 2.35, rx: 635, ry: 273 },
+        { type: "pass", team: "blue", fromIdx: 4, toIdx: 3, start: 2.35, end: 3.5, rx: 710, ry: 334 },
+        { type: "loft_pass", team: "blue", fromIdx: 3, toIdx: 0, start: 3.5, end: 4.7, rx: 760, ry: 204, loft: 15 },
+        { type: "pass", team: "blue", fromIdx: 0, toIdx: 4, start: 4.7, end: 5.75, rx: 792, ry: 282 },
+        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 302, diveDir: 1 }
       ];
     } else if (v === 3) {
       return [
         { type: "dribble", team: "blue", idx: 1, start: 0.0, end: 1.0, tx: 315, ty: 330 },
-        { type: "pass", team: "blue", fromIdx: 1, toIdx: 4, start: 1.0, end: 2.2, rx: 540, ry: 273, curve: 20, loft: 10 },
-        { type: "pass", team: "blue", fromIdx: 4, toIdx: 0, start: 2.2, end: 3.45, rx: 695, ry: 194, curve: 0, loft: 0 },
-        { type: "dribble", team: "blue", idx: 0, start: 3.45, end: 4.4, tx: 775, ty: 198 },
-        { type: "pass", team: "blue", fromIdx: 0, toIdx: 3, start: 4.4, end: 5.75, rx: 788, ry: 296, curve: -20, loft: 9 },
-        { type: "shot_goal", team: "blue", idx: 3, start: 5.75, end: 7.4, gx: 932, gy: 244, diveDir: -1, shotCurve: 16 }
+        { type: "loft_pass", team: "blue", fromIdx: 1, toIdx: 2, start: 1.0, end: 2.25, rx: 535, ry: 212, loft: 16 },
+        { type: "through_pass", team: "blue", fromIdx: 2, toIdx: 0, start: 2.25, end: 3.55, rx: 715, ry: 198 },
+        { type: "pass", team: "blue", fromIdx: 0, toIdx: 3, start: 3.55, end: 4.7, rx: 785, ry: 296 },
+        { type: "pass", team: "blue", fromIdx: 3, toIdx: 3, start: 4.7, end: 5.75, rx: 790, ry: 268 },
+        { type: "shot_goal", team: "blue", idx: 3, start: 5.75, end: 7.4, gx: 932, gy: 244, diveDir: -1 }
       ];
     } else if (v === 4) {
       return [
-        { type: "dribble", team: "blue", idx: 0, start: 0.0, end: 1.15, tx: 365, ty: 205 },
-        { type: "pass", team: "blue", fromIdx: 0, toIdx: 4, start: 1.15, end: 2.4, rx: 590, ry: 273, curve: 0, loft: 0 },
-        { type: "pass", team: "blue", fromIdx: 4, toIdx: 2, start: 2.4, end: 3.65, rx: 685, ry: 208, curve: -20, loft: 10 },
-        { type: "dribble", team: "blue", idx: 2, start: 3.65, end: 4.5, tx: 750, ty: 222 },
-        { type: "pass", team: "blue", fromIdx: 2, toIdx: 4, start: 4.5, end: 5.75, rx: 792, ry: 262, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 302, diveDir: 1, shotCurve: -16 }
+        { type: "dribble", team: "blue", idx: 0, start: 0.0, end: 1.1, tx: 365, ty: 205 },
+        { type: "pass", team: "blue", fromIdx: 0, toIdx: 4, start: 1.1, end: 2.25, rx: 575, ry: 273 },
+        { type: "through_pass", team: "blue", fromIdx: 4, toIdx: 2, start: 2.25, end: 3.65, rx: 735, ry: 218 },
+        { type: "loft_pass", team: "blue", fromIdx: 2, toIdx: 3, start: 3.65, end: 4.75, rx: 782, ry: 312, loft: 14 },
+        { type: "pass", team: "blue", fromIdx: 3, toIdx: 4, start: 4.75, end: 5.75, rx: 792, ry: 265 },
+        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 302, diveDir: 1 }
       ];
     } else {
       return [
-        { type: "dribble", team: "blue", idx: 2, start: 0.0, end: 1.15, tx: 485, ty: 194 },
-        { type: "pass", team: "blue", fromIdx: 2, toIdx: 1, start: 1.15, end: 2.65, rx: 665, ry: 344, curve: 26, loft: 12 },
-        { type: "dribble", team: "blue", idx: 1, start: 2.65, end: 4.2, tx: 765, ty: 336 },
-        { type: "pass", team: "blue", fromIdx: 1, toIdx: 4, start: 4.2, end: 5.75, rx: 792, ry: 273, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 242, diveDir: -1, shotCurve: 16 }
+        { type: "dribble", team: "blue", idx: 2, start: 0.0, end: 1.1, tx: 475, ty: 205 },
+        { type: "loft_pass", team: "blue", fromIdx: 2, toIdx: 1, start: 1.1, end: 2.55, rx: 645, ry: 340, loft: 17 },
+        { type: "through_pass", team: "blue", fromIdx: 1, toIdx: 4, start: 2.55, end: 4.2, rx: 765, ry: 278 },
+        { type: "pass", team: "blue", fromIdx: 4, toIdx: 4, start: 4.2, end: 5.75, rx: 792, ry: 273 },
+        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 242, diveDir: -1 }
       ];
     }
   }
@@ -2178,57 +2176,55 @@ function buildMatchScript(blueScores, chance, variant) {
       return [
         { type: "dribble", team: "blue", idx: 2, start: 0.0, end: 0.95, tx: 445, ty: 225 },
         { type: "steal", fromTeam: "blue", toTeam: "red", toIdx: 2, start: 0.95, end: 1.55, tx: 495, ty: 225 },
-        { type: "dribble", team: "red", idx: 2, start: 1.55, end: 2.35, tx: 430, ty: 235 },
-        { type: "pass", team: "red", fromIdx: 2, toIdx: 3, start: 2.35, end: 3.55, rx: 345, ry: 334, curve: -22, loft: 10 },
-        { type: "pass", team: "red", fromIdx: 3, toIdx: 2, start: 3.55, end: 4.65, rx: 245, ry: 206, curve: 0, loft: 0 },
-        { type: "pass", team: "red", fromIdx: 2, toIdx: 4, start: 4.65, end: 5.75, rx: 170, ry: 273, curve: -18, loft: 9 },
-        { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1, shotCurve: -16 }
+        { type: "pass", team: "red", fromIdx: 2, toIdx: 3, start: 1.55, end: 2.65, rx: 355, ry: 332 },
+        { type: "through_pass", team: "red", fromIdx: 3, toIdx: 4, start: 2.65, end: 4.15, rx: 215, ry: 273 },
+        { type: "loft_pass", team: "red", fromIdx: 4, toIdx: 2, start: 4.15, end: 5.75, rx: 170, ry: 248, loft: 15 },
+        { type: "shot_goal", team: "red", idx: 2, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1 }
       ];
     } else if (v === 1) {
       return [
         { type: "dribble", team: "blue", idx: 3, start: 0.0, end: 0.95, tx: 445, ty: 320 },
         { type: "steal", fromTeam: "blue", toTeam: "red", toIdx: 4, start: 0.95, end: 1.55, tx: 495, ty: 295 },
-        { type: "pass", team: "red", fromIdx: 4, toIdx: 2, start: 1.55, end: 2.8, rx: 355, ry: 202, curve: 0, loft: 0 },
-        { type: "pass", team: "red", fromIdx: 2, toIdx: 1, start: 2.8, end: 4.2, rx: 225, ry: 338, curve: -24, loft: 11 },
-        { type: "pass", team: "red", fromIdx: 1, toIdx: 4, start: 4.2, end: 5.75, rx: 170, ry: 292, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 304, diveDir: 1, shotCurve: 16 }
+        { type: "loft_pass", team: "red", fromIdx: 4, toIdx: 2, start: 1.55, end: 2.8, rx: 355, ry: 205, loft: 16 },
+        { type: "through_pass", team: "red", fromIdx: 2, toIdx: 1, start: 2.8, end: 4.25, rx: 210, ry: 336 },
+        { type: "pass", team: "red", fromIdx: 1, toIdx: 4, start: 4.25, end: 5.75, rx: 170, ry: 292 },
+        { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 304, diveDir: 1 }
       ];
     } else if (v === 2) {
       return [
         { type: "dribble", team: "blue", idx: 4, start: 0.0, end: 0.95, tx: 485, ty: 273 },
         { type: "steal", fromTeam: "blue", toTeam: "red", toIdx: 3, start: 0.95, end: 1.55, tx: 525, ty: 295 },
-        { type: "dribble", team: "red", idx: 3, start: 1.55, end: 2.4, tx: 445, ty: 305 },
-        { type: "pass", team: "red", fromIdx: 3, toIdx: 0, start: 2.4, end: 3.65, rx: 305, ry: 196, curve: 22, loft: 10 },
-        { type: "pass", team: "red", fromIdx: 0, toIdx: 3, start: 3.65, end: 4.75, rx: 235, ry: 330, curve: 0, loft: 0 },
-        { type: "pass", team: "red", fromIdx: 3, toIdx: 4, start: 4.75, end: 5.75, rx: 170, ry: 252, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1, shotCurve: -16 }
+        { type: "through_pass", team: "red", fromIdx: 3, toIdx: 0, start: 1.55, end: 3.1, rx: 305, ry: 202 },
+        { type: "pass", team: "red", fromIdx: 0, toIdx: 3, start: 3.1, end: 4.35, rx: 225, ry: 328 },
+        { type: "loft_pass", team: "red", fromIdx: 3, toIdx: 4, start: 4.35, end: 5.75, rx: 170, ry: 252, loft: 14 },
+        { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1 }
       ];
     } else if (v === 3) {
       return [
         { type: "dribble", team: "blue", idx: 0, start: 0.0, end: 0.95, tx: 415, ty: 205 },
         { type: "steal", fromTeam: "blue", toTeam: "red", toIdx: 2, start: 0.95, end: 1.55, tx: 465, ty: 205 },
-        { type: "pass", team: "red", fromIdx: 2, toIdx: 4, start: 1.55, end: 2.85, rx: 325, ry: 273, curve: 0, loft: 0 },
-        { type: "pass", team: "red", fromIdx: 4, toIdx: 1, start: 2.85, end: 4.25, rx: 205, ry: 338, curve: -22, loft: 10 },
-        { type: "pass", team: "red", fromIdx: 1, toIdx: 2, start: 4.25, end: 5.75, rx: 172, ry: 248, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "red", idx: 2, start: 5.75, end: 7.4, gx: 28, gy: 304, diveDir: 1, shotCurve: 16 }
+        { type: "pass", team: "red", fromIdx: 2, toIdx: 4, start: 1.55, end: 2.85, rx: 325, ry: 273 },
+        { type: "through_pass", team: "red", fromIdx: 4, toIdx: 1, start: 2.85, end: 4.3, rx: 205, ry: 336 },
+        { type: "pass", team: "red", fromIdx: 1, toIdx: 2, start: 4.3, end: 5.75, rx: 172, ry: 248 },
+        { type: "shot_goal", team: "red", idx: 2, start: 5.75, end: 7.4, gx: 28, gy: 304, diveDir: 1 }
       ];
     } else if (v === 4) {
       return [
         { type: "dribble", team: "blue", idx: 1, start: 0.0, end: 0.95, tx: 420, ty: 336 },
         { type: "steal", fromTeam: "blue", toTeam: "red", toIdx: 3, start: 0.95, end: 1.55, tx: 470, ty: 332 },
-        { type: "pass", team: "red", fromIdx: 3, toIdx: 0, start: 1.55, end: 3.0, rx: 285, ry: 194, curve: 24, loft: 11 },
-        { type: "dribble", team: "red", idx: 0, start: 3.0, end: 4.35, tx: 205, ty: 198 },
-        { type: "pass", team: "red", fromIdx: 0, toIdx: 4, start: 4.35, end: 5.75, rx: 170, ry: 268, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1, shotCurve: -16 }
+        { type: "loft_pass", team: "red", fromIdx: 3, toIdx: 0, start: 1.55, end: 3.0, rx: 285, ry: 198, loft: 16 },
+        { type: "through_pass", team: "red", fromIdx: 0, toIdx: 4, start: 3.0, end: 4.45, rx: 185, ry: 268 },
+        { type: "pass", team: "red", fromIdx: 4, toIdx: 4, start: 4.45, end: 5.75, rx: 170, ry: 268 },
+        { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1 }
       ];
     } else {
       return [
         { type: "dribble", team: "blue", idx: 2, start: 0.0, end: 0.95, tx: 455, ty: 242 },
         { type: "steal", fromTeam: "blue", toTeam: "red", toIdx: 4, start: 0.95, end: 1.55, tx: 505, ty: 256 },
-        { type: "pass", team: "red", fromIdx: 4, toIdx: 3, start: 1.55, end: 2.85, rx: 350, ry: 326, curve: 0, loft: 0 },
-        { type: "pass", team: "red", fromIdx: 3, toIdx: 4, start: 2.85, end: 4.25, rx: 255, ry: 273, curve: 18, loft: 9 },
-        { type: "pass", team: "red", fromIdx: 4, toIdx: 2, start: 4.25, end: 5.75, rx: 172, ry: 234, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "red", idx: 2, start: 5.75, end: 7.4, gx: 28, gy: 302, diveDir: 1, shotCurve: 16 }
+        { type: "pass", team: "red", fromIdx: 4, toIdx: 3, start: 1.55, end: 2.85, rx: 350, ry: 326 },
+        { type: "loft_pass", team: "red", fromIdx: 3, toIdx: 4, start: 2.85, end: 4.25, rx: 245, ry: 273, loft: 15 },
+        { type: "through_pass", team: "red", fromIdx: 4, toIdx: 2, start: 4.25, end: 5.75, rx: 172, ry: 234 },
+        { type: "shot_goal", team: "red", idx: 2, start: 5.75, end: 7.4, gx: 28, gy: 302, diveDir: 1 }
       ];
     }
   }
@@ -2237,58 +2233,58 @@ function buildMatchScript(blueScores, chance, variant) {
     if (v === 0) {
       return [
         { type: "dribble", team: "red", idx: 3, start: 0.0, end: 0.9, tx: 375, ty: 322 },
-        { type: "pass", team: "red", fromIdx: 3, toIdx: 4, start: 0.9, end: 1.95, rx: 210, ry: 284, curve: 0, loft: 0 },
-        { type: "shot_save", team: "red", idx: 4, start: 1.95, end: 2.7, sx: 76, sy: 298, diveDir: 1, shotCurve: 14 },
-        { type: "gk_pass", team: "blue", toIdx: 0, start: 2.7, end: 3.8, rx: 295, ry: 194, curve: -20, loft: 14 },
-        { type: "pass", team: "blue", fromIdx: 0, toIdx: 2, start: 3.8, end: 4.8, rx: 575, ry: 202, curve: 0, loft: 0 },
-        { type: "pass", team: "blue", fromIdx: 2, toIdx: 4, start: 4.8, end: 5.75, rx: 788, ry: 268, curve: 18, loft: 9 },
-        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 242, diveDir: -1, shotCurve: 16 }
+        { type: "pass", team: "red", fromIdx: 3, toIdx: 4, start: 0.9, end: 1.95, rx: 210, ry: 284 },
+        { type: "shot_save", team: "red", idx: 4, start: 1.95, end: 2.7, sx: 76, sy: 298, diveDir: 1 },
+        { type: "gk_pass", team: "blue", toIdx: 0, start: 2.7, end: 3.8, rx: 295, ry: 198, loft: 16 },
+        { type: "through_pass", team: "blue", fromIdx: 0, toIdx: 2, start: 3.8, end: 4.85, rx: 595, ry: 205 },
+        { type: "pass", team: "blue", fromIdx: 2, toIdx: 4, start: 4.85, end: 5.75, rx: 788, ry: 268 },
+        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 242, diveDir: -1 }
       ];
     } else if (v === 1) {
       return [
         { type: "dribble", team: "red", idx: 2, start: 0.0, end: 0.9, tx: 380, ty: 214 },
-        { type: "pass", team: "red", fromIdx: 2, toIdx: 4, start: 0.9, end: 1.95, rx: 208, ry: 252, curve: -18, loft: 9 },
-        { type: "shot_save", team: "red", idx: 4, start: 1.95, end: 2.7, sx: 76, sy: 246, diveDir: -1, shotCurve: -14 },
-        { type: "gk_pass", team: "blue", toIdx: 1, start: 2.7, end: 3.8, rx: 295, ry: 340, curve: 20, loft: 14 },
-        { type: "pass", team: "blue", fromIdx: 1, toIdx: 3, start: 3.8, end: 4.8, rx: 570, ry: 332, curve: 0, loft: 0 },
-        { type: "pass", team: "blue", fromIdx: 3, toIdx: 2, start: 4.8, end: 5.75, rx: 785, ry: 230, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "blue", idx: 2, start: 5.75, end: 7.4, gx: 932, gy: 304, diveDir: 1, shotCurve: -16 }
+        { type: "pass", team: "red", fromIdx: 2, toIdx: 4, start: 0.9, end: 1.95, rx: 208, ry: 252 },
+        { type: "shot_save", team: "red", idx: 4, start: 1.95, end: 2.7, sx: 76, sy: 246, diveDir: -1 },
+        { type: "gk_pass", team: "blue", toIdx: 1, start: 2.7, end: 3.8, rx: 295, ry: 338, loft: 16 },
+        { type: "pass", team: "blue", fromIdx: 1, toIdx: 3, start: 3.8, end: 4.8, rx: 570, ry: 332 },
+        { type: "through_pass", team: "blue", fromIdx: 3, toIdx: 2, start: 4.8, end: 5.75, rx: 785, ry: 230 },
+        { type: "shot_goal", team: "blue", idx: 2, start: 5.75, end: 7.4, gx: 932, gy: 304, diveDir: 1 }
       ];
     } else if (v === 2) {
       return [
         { type: "dribble", team: "red", idx: 4, start: 0.0, end: 1.1, tx: 315, ty: 273 },
-        { type: "shot_save", team: "red", idx: 4, start: 1.1, end: 2.5, sx: 76, sy: 272, diveDir: 1, shotCurve: 14 },
-        { type: "gk_pass", team: "blue", toIdx: 2, start: 2.5, end: 3.6, rx: 375, ry: 208, curve: -18, loft: 14 },
-        { type: "pass", team: "blue", fromIdx: 2, toIdx: 3, start: 3.6, end: 4.7, rx: 605, ry: 332, curve: 22, loft: 10 },
-        { type: "pass", team: "blue", fromIdx: 3, toIdx: 4, start: 4.7, end: 5.75, rx: 790, ry: 280, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 302, diveDir: 1, shotCurve: -16 }
+        { type: "shot_save", team: "red", idx: 4, start: 1.1, end: 2.5, sx: 76, sy: 272, diveDir: 1 },
+        { type: "gk_pass", team: "blue", toIdx: 2, start: 2.5, end: 3.6, rx: 375, ry: 210, loft: 16 },
+        { type: "through_pass", team: "blue", fromIdx: 2, toIdx: 3, start: 3.6, end: 4.75, rx: 625, ry: 332 },
+        { type: "pass", team: "blue", fromIdx: 3, toIdx: 4, start: 4.75, end: 5.75, rx: 790, ry: 280 },
+        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 302, diveDir: 1 }
       ];
     } else if (v === 3) {
       return [
         { type: "dribble", team: "red", idx: 0, start: 0.0, end: 1.1, tx: 330, ty: 202 },
-        { type: "shot_save", team: "red", idx: 0, start: 1.1, end: 2.5, sx: 76, sy: 245, diveDir: -1, shotCurve: -14 },
-        { type: "gk_pass", team: "blue", toIdx: 3, start: 2.5, end: 3.6, rx: 385, ry: 336, curve: 20, loft: 14 },
-        { type: "pass", team: "blue", fromIdx: 3, toIdx: 4, start: 3.6, end: 4.7, rx: 635, ry: 273, curve: 0, loft: 0 },
-        { type: "pass", team: "blue", fromIdx: 4, toIdx: 2, start: 4.7, end: 5.75, rx: 790, ry: 228, curve: -18, loft: 9 },
-        { type: "shot_goal", team: "blue", idx: 2, start: 5.75, end: 7.4, gx: 932, gy: 242, diveDir: -1, shotCurve: 16 }
+        { type: "shot_save", team: "red", idx: 0, start: 1.1, end: 2.5, sx: 76, sy: 245, diveDir: -1 },
+        { type: "gk_pass", team: "blue", toIdx: 3, start: 2.5, end: 3.6, rx: 385, ry: 334, loft: 16 },
+        { type: "pass", team: "blue", fromIdx: 3, toIdx: 4, start: 3.6, end: 4.7, rx: 635, ry: 273 },
+        { type: "through_pass", team: "blue", fromIdx: 4, toIdx: 2, start: 4.7, end: 5.75, rx: 790, ry: 228 },
+        { type: "shot_goal", team: "blue", idx: 2, start: 5.75, end: 7.4, gx: 932, gy: 242, diveDir: -1 }
       ];
     } else if (v === 4) {
       return [
         { type: "dribble", team: "red", idx: 1, start: 0.0, end: 1.1, tx: 330, ty: 342 },
-        { type: "shot_save", team: "red", idx: 1, start: 1.1, end: 2.5, sx: 76, sy: 300, diveDir: 1, shotCurve: 14 },
-        { type: "gk_pass", team: "blue", toIdx: 0, start: 2.5, end: 3.6, rx: 375, ry: 194, curve: -20, loft: 14 },
-        { type: "pass", team: "blue", fromIdx: 0, toIdx: 4, start: 3.6, end: 4.7, rx: 645, ry: 273, curve: 18, loft: 9 },
-        { type: "pass", team: "blue", fromIdx: 4, toIdx: 3, start: 4.7, end: 5.75, rx: 790, ry: 312, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "blue", idx: 3, start: 5.75, end: 7.4, gx: 932, gy: 304, diveDir: 1, shotCurve: -16 }
+        { type: "shot_save", team: "red", idx: 1, start: 1.1, end: 2.5, sx: 76, sy: 300, diveDir: 1 },
+        { type: "gk_pass", team: "blue", toIdx: 0, start: 2.5, end: 3.6, rx: 375, ry: 198, loft: 16 },
+        { type: "loft_pass", team: "blue", fromIdx: 0, toIdx: 4, start: 3.6, end: 4.75, rx: 645, ry: 273, loft: 14 },
+        { type: "through_pass", team: "blue", fromIdx: 4, toIdx: 3, start: 4.75, end: 5.75, rx: 790, ry: 312 },
+        { type: "shot_goal", team: "blue", idx: 3, start: 5.75, end: 7.4, gx: 932, gy: 304, diveDir: 1 }
       ];
     } else {
       return [
         { type: "dribble", team: "red", idx: 4, start: 0.0, end: 1.05, tx: 340, ty: 260 },
-        { type: "shot_save", team: "red", idx: 4, start: 1.05, end: 2.45, sx: 76, sy: 255, diveDir: -1, shotCurve: -14 },
-        { type: "gk_pass", team: "blue", toIdx: 4, start: 2.45, end: 3.6, rx: 485, ry: 273, curve: 0, loft: 14 },
-        { type: "pass", team: "blue", fromIdx: 4, toIdx: 1, start: 3.6, end: 4.7, rx: 695, ry: 340, curve: 20, loft: 10 },
-        { type: "pass", team: "blue", fromIdx: 1, toIdx: 4, start: 4.7, end: 5.75, rx: 790, ry: 268, curve: 0, loft: 0 },
-        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 242, diveDir: -1, shotCurve: 16 }
+        { type: "shot_save", team: "red", idx: 4, start: 1.05, end: 2.45, sx: 76, sy: 255, diveDir: -1 },
+        { type: "gk_pass", team: "blue", toIdx: 4, start: 2.45, end: 3.6, rx: 485, ry: 273, loft: 16 },
+        { type: "pass", team: "blue", fromIdx: 4, toIdx: 1, start: 3.6, end: 4.7, rx: 695, ry: 338 },
+        { type: "through_pass", team: "blue", fromIdx: 1, toIdx: 4, start: 4.7, end: 5.75, rx: 790, ry: 268 },
+        { type: "shot_goal", team: "blue", idx: 4, start: 5.75, end: 7.4, gx: 932, gy: 242, diveDir: -1 }
       ];
     }
   }
@@ -2297,58 +2293,58 @@ function buildMatchScript(blueScores, chance, variant) {
   if (v === 0) {
     return [
       { type: "dribble", team: "blue", idx: 2, start: 0.0, end: 0.9, tx: 575, ty: 215 },
-      { type: "pass", team: "blue", fromIdx: 2, toIdx: 4, start: 0.9, end: 1.95, rx: 750, ry: 258, curve: 0, loft: 0 },
-      { type: "shot_save", team: "blue", idx: 4, start: 1.95, end: 2.7, sx: 884, sy: 246, diveDir: -1, shotCurve: 14 },
-      { type: "gk_pass", team: "red", toIdx: 1, start: 2.7, end: 3.8, rx: 675, ry: 344, curve: -20, loft: 14 },
-      { type: "pass", team: "red", fromIdx: 1, toIdx: 3, start: 3.8, end: 4.8, rx: 390, ry: 332, curve: 0, loft: 0 },
-      { type: "pass", team: "red", fromIdx: 3, toIdx: 4, start: 4.8, end: 5.75, rx: 170, ry: 276, curve: 18, loft: 9 },
-      { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 304, diveDir: 1, shotCurve: 16 }
+      { type: "pass", team: "blue", fromIdx: 2, toIdx: 4, start: 0.9, end: 1.95, rx: 750, ry: 258 },
+      { type: "shot_save", team: "blue", idx: 4, start: 1.95, end: 2.7, sx: 884, sy: 246, diveDir: -1 },
+      { type: "gk_pass", team: "red", toIdx: 1, start: 2.7, end: 3.8, rx: 675, ry: 340, loft: 16 },
+      { type: "through_pass", team: "red", fromIdx: 1, toIdx: 3, start: 3.8, end: 4.85, rx: 375, ry: 332 },
+      { type: "pass", team: "red", fromIdx: 3, toIdx: 4, start: 4.85, end: 5.75, rx: 170, ry: 276 },
+      { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 304, diveDir: 1 }
     ];
   } else if (v === 1) {
     return [
       { type: "dribble", team: "blue", idx: 3, start: 0.0, end: 0.9, tx: 570, ty: 325 },
-      { type: "pass", team: "blue", fromIdx: 3, toIdx: 4, start: 0.9, end: 1.95, rx: 750, ry: 288, curve: -18, loft: 9 },
-      { type: "shot_save", team: "blue", idx: 4, start: 1.95, end: 2.7, sx: 884, sy: 298, diveDir: 1, shotCurve: -14 },
-      { type: "gk_pass", team: "red", toIdx: 0, start: 2.7, end: 3.8, rx: 670, ry: 196, curve: 20, loft: 14 },
-      { type: "pass", team: "red", fromIdx: 0, toIdx: 2, start: 3.8, end: 4.8, rx: 395, ry: 208, curve: 0, loft: 0 },
-      { type: "pass", team: "red", fromIdx: 2, toIdx: 3, start: 4.8, end: 5.75, rx: 175, ry: 312, curve: 0, loft: 0 },
-      { type: "shot_goal", team: "red", idx: 3, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1, shotCurve: -16 }
+      { type: "pass", team: "blue", fromIdx: 3, toIdx: 4, start: 0.9, end: 1.95, rx: 750, ry: 288 },
+      { type: "shot_save", team: "blue", idx: 4, start: 1.95, end: 2.7, sx: 884, sy: 298, diveDir: 1 },
+      { type: "gk_pass", team: "red", toIdx: 0, start: 2.7, end: 3.8, rx: 670, ry: 198, loft: 16 },
+      { type: "pass", team: "red", fromIdx: 0, toIdx: 2, start: 3.8, end: 4.8, rx: 395, ry: 208 },
+      { type: "through_pass", team: "red", fromIdx: 2, toIdx: 3, start: 4.8, end: 5.75, rx: 175, ry: 312 },
+      { type: "shot_goal", team: "red", idx: 3, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1 }
     ];
   } else if (v === 2) {
     return [
       { type: "dribble", team: "blue", idx: 4, start: 0.0, end: 1.1, tx: 640, ty: 273 },
-      { type: "shot_save", team: "blue", idx: 4, start: 1.1, end: 2.5, sx: 884, sy: 272, diveDir: -1, shotCurve: 14 },
-      { type: "gk_pass", team: "red", toIdx: 3, start: 2.5, end: 3.6, rx: 590, ry: 330, curve: -18, loft: 14 },
-      { type: "pass", team: "red", fromIdx: 3, toIdx: 2, start: 3.6, end: 4.7, rx: 365, ry: 212, curve: 22, loft: 10 },
-      { type: "pass", team: "red", fromIdx: 2, toIdx: 4, start: 4.7, end: 5.75, rx: 170, ry: 252, curve: 0, loft: 0 },
-      { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1, shotCurve: -16 }
+      { type: "shot_save", team: "blue", idx: 4, start: 1.1, end: 2.5, sx: 884, sy: 272, diveDir: -1 },
+      { type: "gk_pass", team: "red", toIdx: 3, start: 2.5, end: 3.6, rx: 590, ry: 330, loft: 16 },
+      { type: "through_pass", team: "red", fromIdx: 3, toIdx: 2, start: 3.6, end: 4.75, rx: 345, ry: 212 },
+      { type: "pass", team: "red", fromIdx: 2, toIdx: 4, start: 4.75, end: 5.75, rx: 170, ry: 252 },
+      { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1 }
     ];
   } else if (v === 3) {
     return [
       { type: "dribble", team: "blue", idx: 0, start: 0.0, end: 1.1, tx: 625, ty: 202 },
-      { type: "shot_save", team: "blue", idx: 0, start: 1.1, end: 2.5, sx: 884, sy: 245, diveDir: -1, shotCurve: 14 },
-      { type: "gk_pass", team: "red", toIdx: 2, start: 2.5, end: 3.6, rx: 575, ry: 206, curve: 20, loft: 14 },
-      { type: "pass", team: "red", fromIdx: 2, toIdx: 4, start: 3.6, end: 4.7, rx: 325, ry: 273, curve: 0, loft: 0 },
-      { type: "pass", team: "red", fromIdx: 4, toIdx: 3, start: 4.7, end: 5.75, rx: 172, ry: 312, curve: -18, loft: 9 },
-      { type: "shot_goal", team: "red", idx: 3, start: 5.75, end: 7.4, gx: 28, gy: 304, diveDir: 1, shotCurve: 16 }
+      { type: "shot_save", team: "blue", idx: 0, start: 1.1, end: 2.5, sx: 884, sy: 245, diveDir: -1 },
+      { type: "gk_pass", team: "red", toIdx: 2, start: 2.5, end: 3.6, rx: 575, ry: 206, loft: 16 },
+      { type: "pass", team: "red", fromIdx: 2, toIdx: 4, start: 3.6, end: 4.7, rx: 325, ry: 273 },
+      { type: "through_pass", team: "red", fromIdx: 4, toIdx: 3, start: 4.7, end: 5.75, rx: 172, ry: 312 },
+      { type: "shot_goal", team: "red", idx: 3, start: 5.75, end: 7.4, gx: 28, gy: 304, diveDir: 1 }
     ];
   } else if (v === 4) {
     return [
       { type: "dribble", team: "blue", idx: 1, start: 0.0, end: 1.1, tx: 625, ty: 342 },
-      { type: "shot_save", team: "blue", idx: 1, start: 1.1, end: 2.5, sx: 884, sy: 300, diveDir: 1, shotCurve: -14 },
-      { type: "gk_pass", team: "red", toIdx: 1, start: 2.5, end: 3.6, rx: 585, ry: 344, curve: -20, loft: 14 },
-      { type: "pass", team: "red", fromIdx: 1, toIdx: 4, start: 3.6, end: 4.7, rx: 320, ry: 273, curve: 18, loft: 9 },
-      { type: "pass", team: "red", fromIdx: 4, toIdx: 2, start: 4.7, end: 5.75, rx: 172, ry: 232, curve: 0, loft: 0 },
-      { type: "shot_goal", team: "red", idx: 2, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1, shotCurve: -16 }
+      { type: "shot_save", team: "blue", idx: 1, start: 1.1, end: 2.5, sx: 884, sy: 300, diveDir: 1 },
+      { type: "gk_pass", team: "red", toIdx: 1, start: 2.5, end: 3.6, rx: 585, ry: 340, loft: 16 },
+      { type: "loft_pass", team: "red", fromIdx: 1, toIdx: 4, start: 3.6, end: 4.75, rx: 320, ry: 273, loft: 14 },
+      { type: "through_pass", team: "red", fromIdx: 4, toIdx: 2, start: 4.75, end: 5.75, rx: 172, ry: 232 },
+      { type: "shot_goal", team: "red", idx: 2, start: 5.75, end: 7.4, gx: 28, gy: 242, diveDir: -1 }
     ];
   } else {
     return [
       { type: "dribble", team: "blue", idx: 4, start: 0.0, end: 1.05, tx: 620, ty: 285 },
-      { type: "shot_save", team: "blue", idx: 4, start: 1.05, end: 2.45, sx: 884, sy: 290, diveDir: 1, shotCurve: -14 },
-      { type: "gk_pass", team: "red", toIdx: 4, start: 2.45, end: 3.6, rx: 475, ry: 273, curve: 0, loft: 14 },
-      { type: "pass", team: "red", fromIdx: 4, toIdx: 0, start: 3.6, end: 4.7, rx: 265, ry: 198, curve: 20, loft: 10 },
-      { type: "pass", team: "red", fromIdx: 0, toIdx: 4, start: 4.7, end: 5.75, rx: 170, ry: 268, curve: 0, loft: 0 },
-      { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 302, diveDir: 1, shotCurve: 16 }
+      { type: "shot_save", team: "blue", idx: 4, start: 1.05, end: 2.45, sx: 884, sy: 290, diveDir: 1 },
+      { type: "gk_pass", team: "red", toIdx: 4, start: 2.45, end: 3.6, rx: 475, ry: 273, loft: 16 },
+      { type: "pass", team: "red", fromIdx: 4, toIdx: 0, start: 3.6, end: 4.7, rx: 265, ry: 198 },
+      { type: "through_pass", team: "red", fromIdx: 0, toIdx: 4, start: 4.7, end: 5.75, rx: 170, ry: 268 },
+      { type: "shot_goal", team: "red", idx: 4, start: 5.75, end: 7.4, gx: 28, gy: 302, diveDir: 1 }
     ];
   }
 }
@@ -2394,6 +2390,7 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
   let ballZ = 0;
   let activeSegIndex = -1;
   let segStartBall = { x: ballX, y: ballY };
+  let segStartReceiver = { x: 0, y: 0 };
   const ballTrail = [];
 
   function enforcePlayerAndBallClearance(allOutfield, bX, bY, exemptPlayers) {
@@ -2438,20 +2435,6 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
     });
   }
 
-  function getCurvedControlPoint(x0, y0, x2, y2, curveOffset) {
-    const midX = (x0 + x2) * 0.5;
-    const midY = (y0 + y2) * 0.5;
-    const dx = x2 - x0;
-    const dy = y2 - y0;
-    const len = Math.hypot(dx, dy) || 1;
-    const perpX = -dy / len;
-    const perpY = dx / len;
-    return {
-      cx: midX + perpX * curveOffset,
-      cy: midY + perpY * curveOffset
-    };
-  }
-
   function step(now) {
     const dt = Math.min(0.033, Math.max(0.001, (now - lastTime) / 1000));
     lastTime = now;
@@ -2471,6 +2454,10 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
     if (segIdx !== activeSegIndex) {
       activeSegIndex = segIdx;
       segStartBall = { x: ballX, y: ballY };
+      if (seg.type === "pass" || seg.type === "loft_pass" || seg.type === "through_pass" || seg.type === "gk_pass") {
+        const rec = getTeamArray(seg.team)[seg.toIdx];
+        segStartReceiver = { x: rec.x, y: rec.y };
+      }
     }
 
     const segDur = Math.max(0.01, seg.end - seg.start);
@@ -2493,7 +2480,7 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
         exemptPlayers.add(getTeamArray(seg.team)[seg.idx]);
       } else if (seg.type === "steal") {
         exemptPlayers.add(getTeamArray(seg.toTeam)[seg.toIdx]);
-      } else if (seg.type === "pass") {
+      } else if (seg.type === "pass" || seg.type === "loft_pass" || seg.type === "through_pass") {
         exemptPlayers.add(getTeamArray(seg.team)[seg.fromIdx]);
         exemptPlayers.add(getTeamArray(seg.team)[seg.toIdx]);
       } else if (seg.type === "gk_pass") {
@@ -2556,11 +2543,18 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
       } else if (seg.type === "steal") {
         const interceptor = getTeamArray(seg.toTeam)[seg.toIdx];
         desiredTargets.set(interceptor, { x: seg.tx, y: seg.ty });
-      } else if (seg.type === "pass" || seg.type === "gk_pass") {
+      } else if (seg.type === "pass" || seg.type === "loft_pass" || seg.type === "gk_pass") {
         const receiver = getTeamArray(seg.team)[seg.toIdx];
         const isBlue = seg.team === "blue";
         const targetX = isBlue ? Math.max(receiver.x, seg.rx) : Math.min(receiver.x, seg.rx);
         desiredTargets.set(receiver, { x: targetX, y: seg.ry });
+      } else if (seg.type === "through_pass") {
+        const receiver = getTeamArray(seg.team)[seg.toIdx];
+        const runEase = Math.min(1, segT * 1.12);
+        desiredTargets.set(receiver, {
+          x: lerp(segStartReceiver.x, seg.rx, runEase),
+          y: lerp(segStartReceiver.y, seg.ry, runEase)
+        });
       } else if (seg.type === "shot_save" || seg.type === "shot_goal") {
         const shooter = getTeamArray(seg.team)[seg.idx];
         const dir = seg.team === "blue" ? 1 : -1;
@@ -2572,7 +2566,7 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
 
       if (segIdx + 1 < script.length) {
         const nextSeg = script[segIdx + 1];
-        if (nextSeg.type === "pass" && nextSeg.team === attackingTeam) {
+        if ((nextSeg.type === "pass" || nextSeg.type === "loft_pass" || nextSeg.type === "through_pass") && nextSeg.team === attackingTeam) {
           const nextRec = getTeamArray(nextSeg.team)[nextSeg.toIdx];
           const isBlue = nextSeg.team === "blue";
           const leadX = lerp(nextRec.x, nextSeg.rx, 0.72);
@@ -2588,8 +2582,8 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
         const dx = tgt.x - p.x;
         const dy = tgt.y - p.y;
         const dist = Math.hypot(dx, dy);
-        const maxSpeed = exemptPlayers.has(p) ? 285 : 235;
-        const desiredSpeed = Math.min(maxSpeed, dist * 5.0);
+        const maxSpeed = exemptPlayers.has(p) ? 305 : 235;
+        const desiredSpeed = Math.min(maxSpeed, dist * 5.2);
         const desiredVx = dist > 1 ? (dx / dist) * desiredSpeed : 0;
         const desiredVy = dist > 1 ? (dy / dist) * desiredSpeed : 0;
 
@@ -2622,36 +2616,31 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
         const destX = receiver.x + dir * 10;
         const destY = receiver.y + 4;
         const ease = 0.5 - 0.5 * Math.cos(Math.PI * segT);
-        const curveVal = seg.curve ?? 0;
-        const loftVal = seg.loft ?? 0;
-
-        if (curveVal === 0 && loftVal === 0) {
-          ballX = lerp(segStartBall.x, destX, ease);
-          ballY = lerp(segStartBall.y, destY, ease);
-          ballZ = 0;
-        } else {
-          const { cx, cy } = getCurvedControlPoint(segStartBall.x, segStartBall.y, destX, destY, curveVal);
-          ballX = quadBezier(segStartBall.x, cx, destX, ease);
-          ballY = quadBezier(segStartBall.y, cy, destY, ease);
-          ballZ = Math.sin(ease * Math.PI) * loftVal;
-        }
-      } else if (seg.type === "gk_pass") {
+        ballX = lerp(segStartBall.x, destX, ease);
+        ballY = lerp(segStartBall.y, destY, ease);
+        ballZ = 0;
+      } else if (seg.type === "loft_pass" || seg.type === "gk_pass") {
         const receiver = getTeamArray(seg.team)[seg.toIdx];
         const dir = seg.team === "blue" ? 1 : -1;
         const destX = receiver.x + dir * 10;
         const destY = receiver.y + 4;
         const ease = 0.5 - 0.5 * Math.cos(Math.PI * segT);
-        const curveVal = seg.curve ?? 18;
-        const { cx, cy } = getCurvedControlPoint(segStartBall.x, segStartBall.y, destX, destY, curveVal);
-        ballX = quadBezier(segStartBall.x, cx, destX, ease);
-        ballY = quadBezier(segStartBall.y, cy, destY, ease);
-        ballZ = Math.sin(ease * Math.PI) * (seg.loft ?? 14);
+        ballX = lerp(segStartBall.x, destX, ease);
+        ballY = lerp(segStartBall.y, destY, ease);
+        ballZ = Math.sin(ease * Math.PI) * (seg.loft ?? 15);
+      } else if (seg.type === "through_pass") {
+        const dir = seg.team === "blue" ? 1 : -1;
+        const targetBallX = seg.rx + dir * 10;
+        const targetBallY = seg.ry + 4;
+        const ease = 1 - Math.pow(1 - segT, 1.5);
+        ballX = lerp(segStartBall.x, targetBallX, ease);
+        ballY = lerp(segStartBall.y, targetBallY, ease);
+        ballZ = 0;
       } else if (seg.type === "shot_save") {
         const shotP = Math.min(1, segT / 0.62);
         const fastEase = 1 - Math.pow(1 - shotP, 1.8);
-        const { cx, cy } = getCurvedControlPoint(segStartBall.x, segStartBall.y, seg.sx, seg.sy, seg.shotCurve || 14);
-        ballX = quadBezier(segStartBall.x, cx, seg.sx, fastEase);
-        ballY = quadBezier(segStartBall.y, cy, seg.sy, fastEase);
+        ballX = lerp(segStartBall.x, seg.sx, fastEase);
+        ballY = lerp(segStartBall.y, seg.sy, fastEase);
         ballZ = Math.sin(fastEase * Math.PI) * 8;
 
         const defendingGk = seg.team === "blue" ? redGk : blueGk;
@@ -2666,9 +2655,8 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
       } else if (seg.type === "shot_goal") {
         const shotP = Math.min(1, segT / 0.34);
         const fastEase = 1 - Math.pow(1 - shotP, 1.75);
-        const { cx, cy } = getCurvedControlPoint(segStartBall.x, segStartBall.y, seg.gx, seg.gy, seg.shotCurve || 16);
-        ballX = quadBezier(segStartBall.x, cx, seg.gx, fastEase);
-        ballY = quadBezier(segStartBall.y, cy, seg.gy, fastEase);
+        ballX = lerp(segStartBall.x, seg.gx, fastEase);
+        ballY = lerp(segStartBall.y, seg.gy, fastEase);
         ballZ = Math.sin(fastEase * Math.PI) * 9;
 
         const defendingGk = seg.team === "blue" ? redGk : blueGk;
@@ -2736,7 +2724,7 @@ function animateMatchPossession(blueScores, chance, onSettled, scenarioVariant =
       }
     }
 
-    const isFastShot = seg.type === "shot_goal" || seg.type === "shot_save";
+    const isFastShot = seg.type === "shot_goal" || seg.type === "shot_save" || seg.type === "through_pass";
     if (!goalReached && isFastShot) {
       ballTrail.push({ x: ballX, y: ballY - ballZ });
       if (ballTrail.length > 7) ballTrail.shift();
@@ -3714,7 +3702,6 @@ function handleGlobalSoundToggle(e) {
   }
 }
 
-// Unlock Web Audio on first touch/pointer anywhere on mobile or desktop
 ["pointerdown", "touchstart", "click"].forEach((evtName) => {
   document.addEventListener(
     evtName,
