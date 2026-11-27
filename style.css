@@ -21,7 +21,7 @@ body {
   flex-direction: column;
   position: relative;
   overflow-x: hidden;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
   /* UEFA Champions League Starry Stadium Night Theme */
   background-color: #040b1e;
   background-image:
@@ -88,11 +88,17 @@ body::before {
 .ucl-corner-emblem {
   position: fixed;
   right: 14px;
-  bottom: calc(34px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(44px + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
   z-index: 1;
-  opacity: 0.72;
+  opacity: 0.65;
   animation: uclEmblemFloat 6s ease-in-out infinite;
+}
+
+.ucl-corner-emblem svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 @keyframes uclEmblemFloat {
@@ -210,7 +216,7 @@ body::before {
   width: 100%;
   max-width: 1180px;
   margin: 14px auto;
-  padding: 0 14px 24px;
+  padding: 0 14px calc(32px + env(safe-area-inset-bottom, 0px));
 }
 
 /* Start Screen */
@@ -308,7 +314,7 @@ body::before {
   border: 1px solid #475569;
   background-color: #1e293b;
   color: #f8fafc;
-  font-size: 16px; /* Prevents iOS Safari auto-zoom on input focus */
+  font-size: 16px;
   font-weight: bold;
   text-align: center;
 }
@@ -557,16 +563,19 @@ body::before {
   width: 100%;
   flex: 1;
   min-height: 386px;
+  max-height: 480px;
   cursor: crosshair;
-  touch-action: none;
+  touch-action: pan-x pan-y;
 }
 
 .action-row {
+  position: relative;
+  z-index: 25;
   display: flex;
   justify-content: center;
   gap: 14px;
-  margin-top: 26px;
-  padding-bottom: 6px;
+  margin-top: 22px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
 }
 
 button {
@@ -668,7 +677,7 @@ button:disabled {
   height: 190px;
   border-radius: 8px;
   border: 1px solid #334155;
-  touch-action: none;
+  touch-action: pan-x pan-y;
 }
 
 .result-summary-box {
@@ -689,7 +698,7 @@ button:disabled {
 
 .site-footer {
   text-align: center;
-  padding: 10px 16px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
   font-size: 12px;
   color: #93c5fd;
   border-top: 1px solid rgba(59, 130, 246, 0.25);
@@ -703,8 +712,8 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px;
-  z-index: 999;
+  padding: 14px calc(14px + env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) calc(14px + env(safe-area-inset-left, 0px));
+  z-index: 1300;
   overflow-y: auto;
 }
 
@@ -842,6 +851,10 @@ button:disabled {
    MOBILE PORTRAIT INTEGRATION (iOS Safari & Android Chrome)
    ============================================================================ */
 @media (max-width: 820px) {
+  body {
+    background-attachment: scroll;
+  }
+
   .top-bar {
     padding: calc(10px + env(safe-area-inset-top, 0px)) 58px 10px 12px;
     gap: 8px;
@@ -882,7 +895,7 @@ button:disabled {
 
   .game-container {
     margin: 10px auto;
-    padding: 0 10px 20px;
+    padding: 0 10px calc(44px + env(safe-area-inset-bottom, 0px));
   }
 
   .start-card {
@@ -910,24 +923,29 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  /* Portrait Phone Ergonomics: Photo + Map + Confirm Button cleanly stacked */
+  /* Portrait Phone Ergonomics: Photo + Map + Confirm Button cleanly above Safari bar */
   .photo-wrapper {
-    height: 225px;
+    height: 195px;
   }
 
   #map {
-    min-height: 265px;
-    height: 265px;
+    min-height: 235px;
+    height: 235px;
+    max-height: 260px;
   }
 
+  .guess-action-bar,
   .action-row {
-    margin-top: 16px;
+    margin-top: 14px;
+    padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
   }
 
   #shoot-btn,
   #next-btn,
-  #confirm-character-btn {
+  #confirm-character-btn,
+  #restart-btn {
     width: 100%;
+    min-height: 48px;
     padding: 14px 18px;
     font-size: 15px;
   }
@@ -946,10 +964,10 @@ button:disabled {
   }
 
   .ucl-corner-emblem {
-    width: 68px;
-    height: 68px;
+    width: 64px;
+    height: 64px;
     right: 6px;
-    bottom: 26px;
-    opacity: 0.55;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    opacity: 0.45;
   }
 }

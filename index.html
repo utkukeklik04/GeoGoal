@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#040b1e" />
@@ -33,7 +33,7 @@
   </button>
 
   <header id="top-hud" class="top-bar hidden">
-    <div id="home-brand-btn" class="brand home-trigger" title="Back to Home">
+    <div id="home-brand-btn" class="brand home-trigger" role="button" tabindex="0" title="Back to Home">
       <span class="hud-earth">🌍</span>
       <div>
         <h1>GeoGoal</h1>
@@ -60,7 +60,7 @@
       </div>
       <div class="stat-box">
         <span id="lbl-lang-hud">Language</span>
-        <button id="hud-lang-btn" class="btn-secondary hud-lang-btn">
+        <button id="hud-lang-btn" type="button" class="btn-secondary hud-lang-btn">
           EN / TR
         </button>
       </div>
@@ -77,8 +77,8 @@
         </div>
 
         <div class="start-actions">
-          <button id="play-btn" class="btn-primary start-play-btn">Play</button>
-          <button id="settings-toggle-btn" class="btn-secondary">Settings</button>
+          <button id="play-btn" type="button" class="btn-primary start-play-btn">Play</button>
+          <button id="settings-toggle-btn" type="button" class="btn-secondary">Settings</button>
         </div>
 
         <div id="settings-panel" class="settings-panel hidden">
@@ -167,7 +167,7 @@
         </div>
 
         <div class="action-row">
-          <button id="confirm-character-btn" class="btn-primary start-play-btn">
+          <button id="confirm-character-btn" type="button" class="btn-primary start-play-btn">
             Confirm & Start →
           </button>
         </div>
@@ -187,7 +187,7 @@
             <div id="image-loader" class="image-loader hidden">Loading photo...</div>
           </div>
           <p id="status-message" class="status-text">
-            Click on the OpenStreetMap map to place your guess pin.
+            Tap on the OpenStreetMap map to place your guess pin.
           </p>
         </div>
 
@@ -200,8 +200,8 @@
         </div>
       </div>
 
-      <div class="action-row">
-        <button id="shoot-btn" class="btn-primary" disabled>
+      <div class="action-row guess-action-bar">
+        <button id="shoot-btn" type="button" class="btn-primary" disabled>
           Confirm Guess & Go to Arena
         </button>
       </div>
@@ -243,7 +243,7 @@
           <div id="result-map" class="mini-map"></div>
           <div class="result-summary-box">
             <p id="result-detail-text">Calculating shot...</p>
-            <button id="next-btn" class="btn-secondary" disabled>
+            <button id="next-btn" type="button" class="btn-secondary" disabled>
               Next Round →
             </button>
           </div>
@@ -301,7 +301,7 @@
       </div>
 
       <div class="modal-actions">
-        <button id="restart-btn" class="btn-primary">Play Again</button>
+        <button id="restart-btn" type="button" class="btn-primary">Play Again</button>
       </div>
     </div>
   </div>

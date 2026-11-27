@@ -741,7 +741,7 @@ const soundEngine = (() => {
       { freq: 987.77, offset: 2.3, dur: 0.18, peak: 0.095 },
       { freq: 1046.5, offset: 2.5, dur: 0.5, peak: 0.11 },
       { freq: 783.99, offset: 3.1, dur: 0.18, peak: 0.085 },
-      { freq: 1046.5, offset: 3.3, dur: 0.2, peak: 0.095 },
+      { freq: 1046.5, offset: 3.3, dur: 0.2, dur: 0.2, peak: 0.095 },
       { freq: 1318.51, offset: 3.55, dur: 0.75, peak: 0.115 }
     ];
 
@@ -954,8 +954,7 @@ async function resolveWorkingImageUrl(locationItem) {
   const wikiUrls = await fetchRealWorldPhotos(locationItem.wikiTitle, 4500);
   const candidates = [
     ...wikiUrls,
-    `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(locationItem.wikiTitle)}.jpg?width=800`,
-    FALLBACK_PHOTO_URL
+    `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(locationItem.wikiTitle)}.jpg?width=800`
   ];
 
   for (let i = 0; i < candidates.length; i++) {
@@ -966,7 +965,6 @@ async function resolveWorkingImageUrl(locationItem) {
     }
   }
 
-  resolvedImageCache.set(key, FALLBACK_PHOTO_URL);
   return FALLBACK_PHOTO_URL;
 }
 
@@ -1283,11 +1281,40 @@ const el = {
 
 const OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
-const map = L.map("map", { worldCopyJump: true, attributionControl: false, tap: true }).setView([25, 15], 2);
+const map = L.map("map", {
+  worldCopyJump: true,
+  attributionControl: false,
+  tap: false,
+  bounceAtZoomLimits: false
+}).setView([25, 15], 2);
 L.tileLayer(OSM_TILE_URL, { maxZoom: 19 }).addTo(map);
 
-const resultMap = L.map("result-map", { worldCopyJump: true, attributionControl: false, tap: true }).setView([25, 15], 1);
+const resultMap = L.map("result-map", {
+  worldCopyJump: true,
+  attributionControl: false,
+  tap: false,
+  bounceAtZoomLimits: false
+}).setView([25, 15], 1);
 L.tileLayer(OSM_TILE_URL, { maxZoom: 19 }).addTo(resultMap);
+
+// Prevents accidental pin placement while panning/zooming on mobile
+let isMapGestureMoving = false;
+let mapGestureResetTimer = null;
+
+map.on("movestart zoomstart dragstart", () => {
+  isMapGestureMoving = true;
+  if (mapGestureResetTimer) {
+    clearTimeout(mapGestureResetTimer);
+    mapGestureResetTimer = null;
+  }
+});
+
+map.on("moveend zoomend dragend", () => {
+  if (mapGestureResetTimer) clearTimeout(mapGestureResetTimer);
+  mapGestureResetTimer = setTimeout(() => {
+    isMapGestureMoving = false;
+  }, 140);
+});
 
 let guessMarker = null;
 let resultGuessMarker = null;
@@ -1296,8 +1323,16 @@ let resultLine = null;
 let resultsChart = null;
 let lastRoundSummary = null;
 let ceremonyTimeoutId = null;
+let arenaTransitionTimeoutId = null;
 let isCeremonyRunning = false;
 let currentLoadToken = 0;
+
+function clearArenaTransitionTimer() {
+  if (arenaTransitionTimeoutId !== null) {
+    clearTimeout(arenaTransitionTimeoutId);
+    arenaTransitionTimeoutId = null;
+  }
+}
 
 function clearCeremonyTimer() {
   if (ceremonyTimeoutId !== null) {
@@ -3094,6 +3129,7 @@ function clearResultMapLayers() {
 
 function showStartScreen() {
   currentLoadToken += 1;
+  clearArenaTransitionTimer();
   clearCeremonyTimer();
   soundEngine.stopSelectionTheme();
   if (animFrameId) {
@@ -3114,6 +3150,7 @@ function showStartScreen() {
 
 function showModeScreen() {
   currentLoadToken += 1;
+  clearArenaTransitionTimer();
   clearCeremonyTimer();
   soundEngine.stopSelectionTheme();
   if (animFrameId) {
@@ -3132,6 +3169,7 @@ function showModeScreen() {
 
 function showCharacterScreen() {
   currentLoadToken += 1;
+  clearArenaTransitionTimer();
   clearCeremonyTimer();
   soundEngine.stopSelectionTheme();
   if (animFrameId) {
@@ -3149,6 +3187,7 @@ function showCharacterScreen() {
 }
 
 function showGuessScreen() {
+  clearArenaTransitionTimer();
   clearCeremonyTimer();
   soundEngine.stopWelcomeTheme();
   if (animFrameId) {
@@ -3186,6 +3225,7 @@ function showGlobeTransition(messageText) {
 }
 
 async function beginMatchWithBanner(bannerMsg) {
+  clearArenaTransitionTimer();
   clearCeremonyTimer();
   soundEngine.stopWelcomeTheme();
   syncSettingsFromInputs();
@@ -3207,6 +3247,7 @@ async function beginMatchWithBanner(bannerMsg) {
 async function loadRound() {
   const token = ++currentLoadToken;
   lastRoundSummary = null;
+  isMapGestureMoving = false;
   game.stopTimer();
   showGuessScreen();
   clearGuessMapLayers();
@@ -3306,6 +3347,7 @@ function resolveRound(latlng, noPinAtAll = false) {
   soundEngine.stopSelectionTheme();
   el.shootBtn.disabled = true;
 
+  const token = currentLoadToken;
   const isFinalMode = game.getMode() === "final";
   showGlobeTransition(isFinalMode ? t("matchLoadingPrompt") : t("penaltyLoadingPrompt"));
 
@@ -3326,7 +3368,11 @@ function resolveRound(latlng, noPinAtAll = false) {
     }
   }
 
-  setTimeout(() => {
+  clearArenaTransitionTimer();
+  arenaTransitionTimeoutId = setTimeout(() => {
+    arenaTransitionTimeoutId = null;
+    if (token !== currentLoadToken || el.penaltyScreen.classList.contains("hidden")) return;
+
     el.penaltyLoading.classList.add("hidden");
     el.penaltyStage.classList.remove("hidden");
     setTimeout(() => resultMap.invalidateSize(), 80);
@@ -3421,6 +3467,7 @@ function displaySummaryContent(totalGoals, redGoals, totalRounds) {
     if (game.getMode() === "final") {
       const rematchBtn = document.createElement("button");
       rematchBtn.id = "rematch-btn";
+      rematchBtn.type = "button";
       rematchBtn.className = "btn-secondary";
       rematchBtn.textContent = t("rematchBtn");
       rematchBtn.addEventListener("click", () => {
@@ -3576,7 +3623,7 @@ window.addEventListener("orientationchange", () => {
   setTimeout(() => {
     map.invalidateSize();
     resultMap.invalidateSize();
-  }, 180);
+  }, 220);
 });
 
 window.addEventListener("resize", () => {
@@ -3589,6 +3636,13 @@ el.soundToggleBtn.addEventListener("click", handleGlobalSoundToggle);
 
 el.homeBrandBtn.addEventListener("click", () => {
   showStartScreen();
+});
+
+el.homeBrandBtn.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    showStartScreen();
+  }
 });
 
 el.settingsToggleBtn.addEventListener("click", () => {
@@ -3649,7 +3703,7 @@ el.confirmCharacterBtn.addEventListener("click", () => {
 });
 
 map.on("click", (e) => {
-  if (game.isResolved()) return;
+  if (game.isResolved() || isMapGestureMoving) return;
 
   game.setGuess(e.latlng);
   el.guessCoordsText.textContent = `${e.latlng.lat.toFixed(2)}, ${e.latlng.lng.toFixed(2)}`;
@@ -3664,6 +3718,13 @@ map.on("click", (e) => {
       fillColor: "#38bdf8",
       fillOpacity: 0.9
     }).addTo(map);
+  }
+
+  // Ensures the confirm button stays comfortably reachable above mobile bottom bars
+  if (window.innerWidth <= 820) {
+    setTimeout(() => {
+      el.shootBtn.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 80);
   }
 });
 
@@ -3685,6 +3746,7 @@ el.nextBtn.addEventListener("click", () => {
 });
 
 el.restartBtn.addEventListener("click", () => {
+  clearArenaTransitionTimer();
   clearCeremonyTimer();
   removeRematchButtonIfExists();
   el.modal.classList.add("hidden");
