@@ -431,7 +431,8 @@ const UI_TEXT = {
     questionTitle: "Where is this place?",
     cluePrefix: "Clue",
     loadingPhoto: "Loading real-world photo...",
-    statusDefault: "Tap on the OpenStreetMap map to place your guess pin.",
+    photoPreviewStatus: (sec) => `Inspect the photo & clue (${sec}s) — map & countdown start next...`,
+    statusDefault: "Tap on the map to place your pin, then tap Confirm.",
     mapPanelTitle: "OpenStreetMap Guess Area",
     noPin: "No pin placed",
     shootBtn: "Confirm Guess & Go to Arena",
@@ -515,7 +516,8 @@ const UI_TEXT = {
     questionTitle: "Bu yer nerede?",
     cluePrefix: "İpucu",
     loadingPhoto: "Gerçek fotoğraf yükleniyor...",
-    statusDefault: "Tahmin iğnesini bırakmak için OpenStreetMap haritasına dokun.",
+    photoPreviewStatus: (sec) => `Fotoğrafı ve ipucunu incele (${sec} sn) — harita ve geri sayım başlıyor...`,
+    statusDefault: "İğneyi bırakmak için haritaya dokun, sonra Tahmini Onayla'ya bas.",
     mapPanelTitle: "OpenStreetMap Tahmin Alanı",
     noPin: "İğne bırakılmadı",
     shootBtn: "Tahmini Onayla ve Sahaya Geç",
@@ -569,7 +571,7 @@ function t(key) {
 }
 
 // ============================================================================
-// AUDIO SYNTHESIZER (MASTER GAIN + INSTANT MUTE/UNMUTE ON ALL SCREENS)
+// AUDIO SYNTHESIZER (MOBILE UNLOCK + MASTER GAIN + INSTANT MUTE/UNMUTE)
 // ============================================================================
 const soundEngine = (() => {
   let ctxAudio = null;
@@ -581,6 +583,7 @@ const soundEngine = (() => {
   let stepIndex = 0;
   let celebrationTimeout = null;
   let lastSecondsLeft = 15;
+  let unlockedOnce = false;
 
   const welcomeNotes = [261.63, 329.63, 392.0, 493.88, 392.0, 329.63, 293.66, 392.0];
   const normalNotes = [261.63, 329.63, 392.0, 523.25, 392.0, 349.23, 440.0, 392.0];
@@ -605,6 +608,26 @@ const soundEngine = (() => {
     return ctxAudio;
   }
 
+  function unlockFromGesture() {
+    if (!soundEnabled) return;
+    const audio = ensureContext();
+    if (!audio) return;
+
+    // Silent buffer kick ensures iOS Safari & Android Chrome unlock audio immediately
+    try {
+      const buf = audio.createBuffer(1, 1, 22050);
+      const src = audio.createBufferSource();
+      src.buffer = buf;
+      src.connect(masterGain || audio.destination);
+      src.start(0);
+    } catch (_) {}
+
+    if (audio.state === "suspended") {
+      audio.resume().catch(() => {});
+    }
+    unlockedOnce = true;
+  }
+
   function playTone(audio, { freq, type = "triangle", startOffset = 0, duration = 0.2, peak = 0.06, slideTo = null }) {
     if (!soundEnabled || !audio || !masterGain) return;
     const now = audio.currentTime + startOffset;
@@ -627,15 +650,17 @@ const soundEngine = (() => {
   function playWelcomeBeat() {
     if (!soundEnabled) return;
     const audio = ensureContext();
-    if (!audio) return;
+    if (!audio || audio.state === "suspended") return;
     const freq = welcomeNotes[welcomeStep % welcomeNotes.length];
     welcomeStep += 1;
-    playTone(audio, { freq, type: "sine", startOffset: 0, duration: 0.42, peak: 0.022 });
+    playTone(audio, { freq, type: "sine", startOffset: 0, duration: 0.42, peak: 0.028 });
   }
 
   function startWelcomeTheme() {
     stopSelectionTheme();
-    if (!soundEnabled || welcomeInterval !== null) return;
+    if (!soundEnabled) return;
+    ensureContext();
+    if (welcomeInterval !== null) return;
     playWelcomeBeat();
     welcomeInterval = setInterval(playWelcomeBeat, 460);
   }
@@ -651,7 +676,7 @@ const soundEngine = (() => {
   function playThemeBeat(isUrgent) {
     if (!soundEnabled) return;
     const audio = ensureContext();
-    if (!audio || !masterGain) return;
+    if (!audio || !masterGain || audio.state === "suspended") return;
     const now = audio.currentTime;
     const scale = isUrgent ? urgentNotes : normalNotes;
     const freq = scale[stepIndex % scale.length];
@@ -681,6 +706,7 @@ const soundEngine = (() => {
       stopSelectionTheme();
       return;
     }
+    ensureContext();
     const isUrgent = secondsLeft <= 4;
     const intervalMs = isUrgent ? 175 : 290;
     if (themeInterval !== null && themeInterval.ms === intervalMs) return;
@@ -741,7 +767,7 @@ const soundEngine = (() => {
       { freq: 987.77, offset: 2.3, dur: 0.18, peak: 0.095 },
       { freq: 1046.5, offset: 2.5, dur: 0.5, peak: 0.11 },
       { freq: 783.99, offset: 3.1, dur: 0.18, peak: 0.085 },
-      { freq: 1046.5, offset: 3.3, dur: 0.2, dur: 0.2, peak: 0.095 },
+      { freq: 1046.5, offset: 3.3, dur: 0.2, peak: 0.095 },
       { freq: 1318.51, offset: 3.55, dur: 0.75, peak: 0.115 }
     ];
 
@@ -788,7 +814,7 @@ const soundEngine = (() => {
         ctxAudio.suspend().catch(() => {});
       }
     } else {
-      ensureContext();
+      unlockFromGesture();
     }
   }
 
@@ -797,6 +823,8 @@ const soundEngine = (() => {
   }
 
   return {
+    unlockFromGesture,
+    isUnlocked: () => unlockedOnce,
     startWelcomeTheme,
     stopWelcomeTheme,
     updateSelectionTheme,
@@ -817,6 +845,7 @@ const DEFAULT_PENALTY_ROUNDS = 6;
 const DEFAULT_PENALTY_DURATION = 15;
 const DEFAULT_FINAL_ROUNDS = 6;
 const DEFAULT_FINAL_DURATION = 15;
+const PHOTO_PREVIEW_SECONDS = 5;
 const HIGHSCORE_KEY = "geogoal_highscore";
 const resolvedImageCache = new Map();
 const FALLBACK_PHOTO_URL =
@@ -1056,6 +1085,7 @@ function createGameController() {
   let goals = 0;
   let missed = 0;
   let timeLeft = penaltyDurationSetting;
+  let isPhotoPreviewPhase = false;
   let timerId = null;
   let guessLatLng = null;
   let roundResolved = false;
@@ -1089,19 +1119,52 @@ function createGameController() {
     }
   }
 
-  function startTimer(onTick, onExpire) {
+  function startRoundWithPreview(onTick, onPreviewComplete, onExpire) {
     stopTimer();
-    timeLeft = getActiveDurationSetting();
-    onTick(timeLeft);
+    const isMobile = window.innerWidth <= 820;
+    const mainDuration = getActiveDurationSetting();
 
-    timerId = setInterval(() => {
-      timeLeft -= 1;
-      onTick(timeLeft);
-      if (timeLeft <= 0) {
-        stopTimer();
-        onExpire();
-      }
-    }, 1000);
+    if (isMobile) {
+      isPhotoPreviewPhase = true;
+      timeLeft = PHOTO_PREVIEW_SECONDS;
+      onTick(timeLeft, true);
+
+      timerId = setInterval(() => {
+        timeLeft -= 1;
+        if (timeLeft > 0) {
+          onTick(timeLeft, true);
+        } else {
+          stopTimer();
+          isPhotoPreviewPhase = false;
+          if (onPreviewComplete) onPreviewComplete();
+
+          timeLeft = mainDuration;
+          onTick(timeLeft, false);
+
+          timerId = setInterval(() => {
+            timeLeft -= 1;
+            onTick(timeLeft, false);
+            if (timeLeft <= 0) {
+              stopTimer();
+              onExpire();
+            }
+          }, 1000);
+        }
+      }, 1000);
+    } else {
+      isPhotoPreviewPhase = false;
+      timeLeft = mainDuration;
+      onTick(timeLeft, false);
+
+      timerId = setInterval(() => {
+        timeLeft -= 1;
+        onTick(timeLeft, false);
+        if (timeLeft <= 0) {
+          stopTimer();
+          onExpire();
+        }
+      }, 1000);
+    }
   }
 
   function updateSettings({ penaltyRounds, penaltyDuration, finalRounds, finalDuration }) {
@@ -1133,6 +1196,7 @@ function createGameController() {
     getGoals: () => goals,
     getMissed: () => missed,
     getTimeLeft: () => timeLeft,
+    isPreviewPhase: () => isPhotoPreviewPhase,
     getGuess: () => guessLatLng,
     setGuess: (latlng) => {
       if (!roundResolved) guessLatLng = latlng;
@@ -1140,6 +1204,7 @@ function createGameController() {
     isResolved: () => roundResolved,
     markResolved: () => {
       roundResolved = true;
+      isPhotoPreviewPhase = false;
       stopTimer();
     },
     addResult: (entry) => {
@@ -1158,6 +1223,7 @@ function createGameController() {
       currentRoundIndex += 1;
       guessLatLng = null;
       roundResolved = false;
+      isPhotoPreviewPhase = false;
       return questions[currentRoundIndex];
     },
     resetMatch: (rebuildQuestions = true) => {
@@ -1170,11 +1236,12 @@ function createGameController() {
       goals = 0;
       missed = 0;
       timeLeft = getActiveDurationSetting();
+      isPhotoPreviewPhase = false;
       guessLatLng = null;
       roundResolved = false;
       history = [];
     },
-    startTimer,
+    startRoundWithPreview,
     stopTimer,
     getHighScore
   };
@@ -1415,7 +1482,9 @@ function applyLanguageUI() {
     el.guessCoordsText.textContent = t("noPin");
   }
   if (!game.isResolved()) {
-    el.statusMessage.textContent = t("statusDefault");
+    el.statusMessage.textContent = game.isPreviewPhase()
+      ? t("photoPreviewStatus")(game.getTimeLeft())
+      : t("statusDefault");
   } else if (lastRoundSummary) {
     el.penaltyLocationTitle.textContent = `${t("actualPrefix")} ${lastRoundSummary.name}`;
     if (lastRoundSummary.noPinAtAll) {
@@ -3127,6 +3196,14 @@ function clearResultMapLayers() {
   }
 }
 
+function setMobilePreviewState(isPreview) {
+  el.guessScreen.classList.toggle("photo-preview-phase", Boolean(isPreview));
+  el.timerBox.classList.toggle("preview-mode", Boolean(isPreview));
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 60);
+}
+
 function showStartScreen() {
   currentLoadToken += 1;
   clearArenaTransitionTimer();
@@ -3225,6 +3302,7 @@ function showGlobeTransition(messageText) {
 }
 
 async function beginMatchWithBanner(bannerMsg) {
+  soundEngine.unlockFromGesture();
   clearArenaTransitionTimer();
   clearCeremonyTimer();
   soundEngine.stopWelcomeTheme();
@@ -3249,6 +3327,7 @@ async function loadRound() {
   lastRoundSummary = null;
   isMapGestureMoving = false;
   game.stopTimer();
+  setMobilePreviewState(false);
   showGuessScreen();
   clearGuessMapLayers();
   applyLanguageUI();
@@ -3258,7 +3337,7 @@ async function loadRound() {
   el.scoreDisplay.textContent = game.getScore();
   el.highscoreDisplay.textContent = game.getHighScore();
   el.timerDisplay.textContent = "...";
-  el.timerBox.classList.remove("urgent");
+  el.timerBox.classList.remove("urgent", "preview-mode");
   el.shootBtn.disabled = true;
 
   el.imageLoader.classList.remove("hidden");
@@ -3270,13 +3349,37 @@ async function loadRound() {
   const startRoundTimerOnce = () => {
     if (token !== currentLoadToken) return;
     el.imageLoader.classList.add("hidden");
-    game.startTimer(
-      (sec) => {
+
+    const isMobile = window.innerWidth <= 820;
+    if (isMobile) {
+      setMobilePreviewState(true);
+      el.statusMessage.textContent = t("photoPreviewStatus")(PHOTO_PREVIEW_SECONDS);
+    } else {
+      setMobilePreviewState(false);
+      el.statusMessage.textContent = t("statusDefault");
+    }
+
+    game.startRoundWithPreview(
+      (sec, inPreview) => {
+        if (token !== currentLoadToken) return;
         el.timerDisplay.textContent = `${sec}s`;
-        el.timerBox.classList.toggle("urgent", sec <= 4);
-        soundEngine.updateSelectionTheme(sec);
+        el.timerBox.classList.toggle("preview-mode", Boolean(inPreview));
+        el.timerBox.classList.toggle("urgent", !inPreview && sec <= 4);
+
+        if (inPreview) {
+          el.statusMessage.textContent = t("photoPreviewStatus")(sec);
+          soundEngine.startWelcomeTheme();
+        } else {
+          soundEngine.updateSelectionTheme(sec);
+        }
       },
       () => {
+        if (token !== currentLoadToken) return;
+        setMobilePreviewState(false);
+        el.statusMessage.textContent = t("statusDefault");
+      },
+      () => {
+        if (token !== currentLoadToken) return;
         soundEngine.stopSelectionTheme();
         const lastPin = game.getGuess();
         resolveRound(lastPin, !lastPin);
@@ -3344,6 +3447,7 @@ function revealResultMapAndDetails(q, latlng, noPinAtAll, distanceKm, chance, is
 function resolveRound(latlng, noPinAtAll = false) {
   if (game.isResolved()) return;
   game.markResolved();
+  setMobilePreviewState(false);
   soundEngine.stopSelectionTheme();
   el.shootBtn.disabled = true;
 
@@ -3600,24 +3704,34 @@ function handleGlobalSoundToggle(e) {
   updateSoundButtonsUI();
 
   if (nextState) {
+    soundEngine.unlockFromGesture();
     if (!el.startScreen.classList.contains("hidden")) {
       soundEngine.startWelcomeTheme();
     } else if (!el.guessScreen.classList.contains("hidden") && !game.isResolved()) {
-      soundEngine.updateSelectionTheme(game.getTimeLeft());
+      if (game.isPreviewPhase()) soundEngine.startWelcomeTheme();
+      else soundEngine.updateSelectionTheme(game.getTimeLeft());
     }
   }
 }
 
-document.addEventListener(
-  "pointerdown",
-  (e) => {
-    if (e.target && e.target.closest("#floating-sound-btn, #sound-toggle-btn")) return;
-    if (!el.startScreen.classList.contains("hidden") && soundEngine.isSoundEnabled()) {
-      soundEngine.startWelcomeTheme();
-    }
-  },
-  { once: true }
-);
+// Unlock Web Audio on first touch/pointer anywhere on mobile or desktop
+["pointerdown", "touchstart", "click"].forEach((evtName) => {
+  document.addEventListener(
+    evtName,
+    (e) => {
+      if (!soundEngine.isSoundEnabled()) return;
+      soundEngine.unlockFromGesture();
+      if (e.target && e.target.closest("#floating-sound-btn, #sound-toggle-btn")) return;
+      if (!el.startScreen.classList.contains("hidden")) {
+        soundEngine.startWelcomeTheme();
+      } else if (!el.guessScreen.classList.contains("hidden") && !game.isResolved()) {
+        if (game.isPreviewPhase()) soundEngine.startWelcomeTheme();
+        else soundEngine.updateSelectionTheme(game.getTimeLeft());
+      }
+    },
+    { passive: true }
+  );
+});
 
 window.addEventListener("orientationchange", () => {
   setTimeout(() => {
@@ -3646,6 +3760,7 @@ el.homeBrandBtn.addEventListener("keydown", (e) => {
 });
 
 el.settingsToggleBtn.addEventListener("click", () => {
+  soundEngine.unlockFromGesture();
   el.settingsPanel.classList.toggle("hidden");
   if (soundEngine.isSoundEnabled() && !el.startScreen.classList.contains("hidden")) {
     soundEngine.startWelcomeTheme();
@@ -3658,40 +3773,48 @@ el.finalRoundsInput.addEventListener("change", syncSettingsFromInputs);
 el.finalDurationInput.addEventListener("change", syncSettingsFromInputs);
 
 el.langEnBtn.addEventListener("click", () => {
+  soundEngine.unlockFromGesture();
   currentLang = "en";
   document.documentElement.lang = "en";
   applyLanguageUI();
 });
 
 el.langTrBtn.addEventListener("click", () => {
+  soundEngine.unlockFromGesture();
   currentLang = "tr";
   document.documentElement.lang = "tr";
   applyLanguageUI();
 });
 
 el.hudLangBtn.addEventListener("click", () => {
+  soundEngine.unlockFromGesture();
   currentLang = currentLang === "en" ? "tr" : "en";
   document.documentElement.lang = currentLang;
   applyLanguageUI();
 });
 
 el.playBtn.addEventListener("click", () => {
+  soundEngine.unlockFromGesture();
   syncSettingsFromInputs();
   showModeScreen();
+  if (soundEngine.isSoundEnabled()) soundEngine.startWelcomeTheme();
 });
 
 el.choosePenaltyModeBtn.addEventListener("click", () => {
+  soundEngine.unlockFromGesture();
   game.setMode("penalty");
   showCharacterScreen();
 });
 
 el.chooseFinalModeBtn.addEventListener("click", () => {
+  soundEngine.unlockFromGesture();
   game.setMode("final");
   beginMatchWithBanner(t("finalStartingMsg"));
 });
 
 el.playerCards.forEach((card) => {
   card.addEventListener("click", () => {
+    soundEngine.unlockFromGesture();
     el.playerCards.forEach((c) => c.classList.remove("selected"));
     card.classList.add("selected");
     selectedPlayerId = card.dataset.player || "messi";
@@ -3699,6 +3822,7 @@ el.playerCards.forEach((card) => {
 });
 
 el.confirmCharacterBtn.addEventListener("click", () => {
+  soundEngine.unlockFromGesture();
   beginMatchWithBanner(t("duelStartingMsg"));
 });
 
@@ -3719,22 +3843,17 @@ map.on("click", (e) => {
       fillOpacity: 0.9
     }).addTo(map);
   }
-
-  // Ensures the confirm button stays comfortably reachable above mobile bottom bars
-  if (window.innerWidth <= 820) {
-    setTimeout(() => {
-      el.shootBtn.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }, 80);
-  }
 });
 
 el.shootBtn.addEventListener("click", () => {
+  soundEngine.unlockFromGesture();
   const guess = game.getGuess();
   if (!guess || game.isResolved()) return;
   resolveRound(guess, false);
 });
 
 el.nextBtn.addEventListener("click", () => {
+  soundEngine.unlockFromGesture();
   if (isCeremonyRunning) return;
   if (game.hasNextRound()) {
     game.nextRound();
@@ -3746,6 +3865,7 @@ el.nextBtn.addEventListener("click", () => {
 });
 
 el.restartBtn.addEventListener("click", () => {
+  soundEngine.unlockFromGesture();
   clearArenaTransitionTimer();
   clearCeremonyTimer();
   removeRematchButtonIfExists();
